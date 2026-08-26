@@ -1,6 +1,5 @@
-// Middleware de autenticação. Garante que a requisição tem um usuário logado
-// e injeta req.usuario para uso nos controllers/services.
 import type { Request, Response, NextFunction } from "express";
+import { validarTokenUsuario } from "../../auth/auth.service";
 
 export interface UsuarioAutenticado {
   id: string;
@@ -16,13 +15,19 @@ declare module "express-serve-static-core" {
 }
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
-  // TODO: validar token/sessão real e popular req.usuario
-  const usuarioFake: UsuarioAutenticado | undefined = undefined;
+  const authHeader = req.headers.authorization || (req.headers["x-access-token"] as string);
 
-  if (!usuarioFake) {
-    return res.status(401).json({ erro: "Não autenticado" });
+  if (!authHeader) {
+    return res.status(401).json({ erro: "Cabeçalho de autorização não fornecido" });
   }
 
-  req.usuario = usuarioFake;
+  const token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+  const usuario = validarTokenUsuario(token);
+
+  if (!usuario) {
+    return res.status(401).json({ erro: "Token inválido ou expirado" });
+  }
+
+  req.usuario = usuario;
   next();
 }

@@ -1,9 +1,12 @@
+import type { PerfilUsuario } from "../cadastro/usuarios/usuarios.types";
+
 export interface LoginResult {
   token: string;
   usuario: {
     id: string;
     nome: string;
-    perfil: "vendedor" | "supervisor" | "estoquista" | "gerente" | "financeiro" | "administrador";
+    login: string;
+    perfil: PerfilUsuario;
     lojaId: string;
   };
 }
