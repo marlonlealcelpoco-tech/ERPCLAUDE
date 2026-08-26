@@ -1,29 +1,27 @@
-// Regras de negócio do módulo lojas
 import { LojasRepository } from "./lojas.repository";
 import type { CriarLojasDto, AtualizarLojasDto } from "./lojas.schema";
-import type { Lojas } from "./lojas.types";
+import type { Loja } from "./lojas.types";
 import { NotFoundError } from "../../shared/errors/app-error";
 
 export class LojasService {
   constructor(private readonly repo: LojasRepository = new LojasRepository()) {}
 
-  async listar(): Promise<Lojas[]> {
+  async listar(): Promise<Loja[]> {
     return this.repo.listar();
   }
 
-  async buscarPorId(id: string): Promise<Lojas> {
+  async buscarPorId(id: string): Promise<Loja> {
     const item = await this.repo.buscarPorId(id);
-    if (!item) throw new NotFoundError("Lojas não encontrado");
+    if (!item) throw new NotFoundError("Loja não encontrada");
     return item;
   }
 
-  async criar(dados: CriarLojasDto): Promise<Lojas> {
-    // TODO: regras de negócio específicas de lojas
-    return this.repo.criar(dados as any);
+  async criar(dados: CriarLojasDto): Promise<Loja> {
+    return this.repo.criar(dados);
   }
 
-  async atualizar(id: string, dados: AtualizarLojasDto): Promise<Lojas> {
+  async atualizar(id: string, dados: AtualizarLojasDto): Promise<Loja> {
     await this.buscarPorId(id);
-    return this.repo.atualizar(id, dados as any);
+    return this.repo.atualizar(id, dados);
   }
 }

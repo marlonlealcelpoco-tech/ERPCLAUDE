@@ -1,4 +1,3 @@
-// Controller HTTP do módulo produtos
 import type { Request, Response, NextFunction } from "express";
 import { ProdutosService } from "./produtos.service";
 import { criarProdutosSchema, atualizarProdutosSchema } from "./produtos.schema";
@@ -8,7 +7,8 @@ const service = new ProdutosService();
 export const produtosController = {
   async listar(req: Request, res: Response, next: NextFunction) {
     try {
-      const itens = await service.listar();
+      const termo = typeof req.query.busca === "string" ? req.query.busca : undefined;
+      const itens = await service.listar(termo);
       res.json(itens);
     } catch (err) {
       next(err);

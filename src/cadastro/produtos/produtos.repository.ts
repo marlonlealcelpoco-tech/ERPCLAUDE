@@ -1,32 +1,77 @@
-// Acesso a dados do módulo produtos
-// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
-// então este repositório sempre lê/escreve no banco local, e a sincronização com o
-// banco central acontece de forma assíncrona (ver shared/database/sync).
 import { getLocalDb } from "../../shared/database/connection";
-import type { Produtos, CriarProdutosInput, AtualizarProdutosInput } from "./produtos.types";
+import type { Produto, CriarProdutoInput, AtualizarProdutoInput } from "./produtos.types";
+import { enfileirarParaSincronizacao } from "../../shared/database/sync";
+
+const TABLE_NAME = "produtos";
 
 export class ProdutosRepository {
-  async listar(): Promise<Produtos[]> {
+  async listar(): Promise<Produto[]> {
     const db = getLocalDb();
-    // TODO: query real
-    return [];
+    return db.find<Produto>(TABLE_NAME);
   }
 
-  async buscarPorId(id: string): Promise<Produtos | null> {
+  async buscarPorId(id: string): Promise<Produto | null> {
     const db = getLocalDb();
-    // TODO: query real
-    return null;
+    return db.findById<Produto>(TABLE_NAME, id);
   }
 
-  async criar(dados: CriarProdutosInput): Promise<Produtos> {
+  async buscarPorCodigoBarras(codigo: string): Promise<Produto | null> {
     const db = getLocalDb();
-    // TODO: insert real + marcar para sincronização
-    throw new Error("Não implementado");
+    const [produto] = db.find<Produto>(TABLE_NAME, (p) => p.codigoBarras === codigo);
+    return produto || null;
   }
 
-  async atualizar(id: string, dados: AtualizarProdutosInput): Promise<Produtos> {
+  async buscarPorTermo(termo: string): Promise<Produto[]> {
     const db = getLocalDb();
-    // TODO: update real + marcar para sincronização
-    throw new Error("Não implementado");
+    const termoLower = termo.toLowerCase();
+    return db.find<Produto>(TABLE_NAME, (p) =>
+      p.nome.toLowerCase().includes(termoLower) ||
+      (p.codigoBarras ? p.codigoBarras.includes(termoLower) : false) ||
+      (p.categoria ? p.categoria.toLowerCase().includes(termoLower) : false)
+    );
+  }
+
+  async criar(dados: CriarProdutoInput): Promise<Produto> {
+    const db = getLocalDb();
+    const agora = new Date();
+    const novoProduto: Produto = {
+      id: `prod_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      nome: dados.nome,
+      codigoBarras: dados.codigoBarras,
+      precoCusto: dados.precoCusto,
+      precoVenda: dados.precoVenda,
+      estoqueAtual: dados.estoqueAtual ?? 0,
+      categoria: dados.categoria,
+      fornecedorId: dados.fornecedorId,
+      ativo: dados.ativo ?? true,
+      criadoEm: agora,
+      atualizadoEm: agora,
+    };
+
+    db.insert<Produto>(TABLE_NAME, novoProduto);
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "insert",
+      payload: novoProduto,
+    });
+
+    return novoProduto;
+  }
+
+  async atualizar(id: string, dados: AtualizarProdutoInput): Promise<Produto> {
+    const db = getLocalDb();
+    const payload = {
+      ...dados,
+      atualizadoEm: new Date(),
+    };
+
+    const produtoAtualizado = db.update<Produto>(TABLE_NAME, id, payload);
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "update",
+      payload: produtoAtualizado,
+    });
+
+    return produtoAtualizado;
   }
 }

@@ -1,16 +1,35 @@
-// Tipos do módulo produtos
-// TODO: substituir por tipos reais conforme desenho-erp.md
-
-export interface Produtos {
+export interface Produto {
   id: string;
+  nome: string;
+  codigoBarras?: string;
+  precoCusto: number;
+  precoVenda: number;
+  estoqueAtual: number;
+  categoria?: string;
+  fornecedorId?: string;
+  ativo: boolean;
   criadoEm: Date;
   atualizadoEm: Date;
 }
 
-export interface CriarProdutosInput {
-  // TODO: campos de criação
+export interface CriarProdutoInput {
+  nome: string;
+  codigoBarras?: string;
+  precoCusto: number;
+  precoVenda: number;
+  estoqueAtual?: number;
+  categoria?: string;
+  fornecedorId?: string;
+  ativo?: boolean;
 }
 
-export interface AtualizarProdutosInput {
-  // TODO: campos de atualização
+export interface AtualizarProdutoInput {
+  nome?: string;
+  codigoBarras?: string;
+  precoCusto?: number;
+  precoVenda?: number;
+  estoqueAtual?: number;
+  categoria?: string;
+  fornecedorId?: string;
+  ativo?: boolean;
 }

@@ -1,8 +1,14 @@
-// Validação de entrada (zod) do módulo produtos
 import { z } from "zod";
 
 export const criarProdutosSchema = z.object({
-  // TODO: definir campos obrigatórios de produtos
+  nome: z.string().min(2, "Nome do produto deve ter no mínimo 2 caracteres"),
+  codigoBarras: z.string().optional(),
+  precoCusto: z.number().nonnegative("Preço de custo não pode ser negativo"),
+  precoVenda: z.number().positive("Preço de venda deve ser maior que zero"),
+  estoqueAtual: z.number().default(0),
+  categoria: z.string().optional(),
+  fornecedorId: z.string().optional(),
+  ativo: z.boolean().default(true),
 });
 
 export const atualizarProdutosSchema = criarProdutosSchema.partial();

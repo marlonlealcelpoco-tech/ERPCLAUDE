@@ -1,32 +1,59 @@
-// Acesso a dados do módulo lojas
-// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
-// então este repositório sempre lê/escreve no banco local, e a sincronização com o
-// banco central acontece de forma assíncrona (ver shared/database/sync).
 import { getLocalDb } from "../../shared/database/connection";
-import type { Lojas, CriarLojasInput, AtualizarLojasInput } from "./lojas.types";
+import type { Loja, CriarLojaInput, AtualizarLojaInput } from "./lojas.types";
+import { enfileirarParaSincronizacao } from "../../shared/database/sync";
+
+const TABLE_NAME = "lojas";
 
 export class LojasRepository {
-  async listar(): Promise<Lojas[]> {
+  async listar(): Promise<Loja[]> {
     const db = getLocalDb();
-    // TODO: query real
-    return [];
+    return db.find<Loja>(TABLE_NAME);
   }
 
-  async buscarPorId(id: string): Promise<Lojas | null> {
+  async buscarPorId(id: string): Promise<Loja | null> {
     const db = getLocalDb();
-    // TODO: query real
-    return null;
+    return db.findById<Loja>(TABLE_NAME, id);
   }
 
-  async criar(dados: CriarLojasInput): Promise<Lojas> {
+  async criar(dados: CriarLojaInput): Promise<Loja> {
     const db = getLocalDb();
-    // TODO: insert real + marcar para sincronização
-    throw new Error("Não implementado");
+    const agora = new Date();
+    const novaLoja: Loja = {
+      id: `loja_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      nome: dados.nome,
+      cnpj: dados.cnpj,
+      endereco: dados.endereco,
+      telefone: dados.telefone,
+      matriz: dados.matriz ?? false,
+      ativa: dados.ativa ?? true,
+      criadoEm: agora,
+      atualizadoEm: agora,
+    };
+
+    db.insert<Loja>(TABLE_NAME, novaLoja);
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "insert",
+      payload: novaLoja,
+    });
+
+    return novaLoja;
   }
 
-  async atualizar(id: string, dados: AtualizarLojasInput): Promise<Lojas> {
+  async atualizar(id: string, dados: AtualizarLojaInput): Promise<Loja> {
     const db = getLocalDb();
-    // TODO: update real + marcar para sincronização
-    throw new Error("Não implementado");
+    const payload = {
+      ...dados,
+      atualizadoEm: new Date(),
+    };
+
+    const lojaAtualizada = db.update<Loja>(TABLE_NAME, id, payload);
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "update",
+      payload: lojaAtualizada,
+    });
+
+    return lojaAtualizada;
   }
 }
