@@ -1,4 +1,4 @@
-# # ERP Claude
+# ERP Claude
 
 Sistema ERP sob medida (PDV, estoque, financeiro, cadastros), multi-loja, preparado para emissão fiscal (NFC-e) no futuro.
 
