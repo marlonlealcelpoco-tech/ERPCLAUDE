@@ -1,0 +1,32 @@
+// Acesso a dados do módulo vendas
+// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
+// então este repositório sempre lê/escreve no banco local, e a sincronização com o
+// banco central acontece de forma assíncrona (ver shared/database/sync).
+import { getLocalDb } from "../../shared/database/connection";
+import type { Vendas, CriarVendasInput, AtualizarVendasInput } from "./vendas.types";
+
+export class VendasRepository {
+  async listar(): Promise<Vendas[]> {
+    const db = getLocalDb();
+    // TODO: query real
+    return [];
+  }
+
+  async buscarPorId(id: string): Promise<Vendas | null> {
+    const db = getLocalDb();
+    // TODO: query real
+    return null;
+  }
+
+  async criar(dados: CriarVendasInput): Promise<Vendas> {
+    const db = getLocalDb();
+    // TODO: insert real + marcar para sincronização
+    throw new Error("Não implementado");
+  }
+
+  async atualizar(id: string, dados: AtualizarVendasInput): Promise<Vendas> {
+    const db = getLocalDb();
+    // TODO: update real + marcar para sincronização
+    throw new Error("Não implementado");
+  }
+}
