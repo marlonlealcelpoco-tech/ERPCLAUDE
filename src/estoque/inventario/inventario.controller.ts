@@ -1,7 +1,6 @@
-// Controller HTTP do módulo inventario
 import type { Request, Response, NextFunction } from "express";
 import { InventarioService } from "./inventario.service";
-import { criarInventarioSchema, atualizarInventarioSchema } from "./inventario.schema";
+import { criarInventarioSchema } from "./inventario.schema";
 
 const service = new InventarioService();
 
@@ -24,21 +23,13 @@ export const inventarioController = {
     }
   },
 
-  async criar(req: Request, res: Response, next: NextFunction) {
+  async realizarInventario(req: Request, res: Response, next: NextFunction) {
     try {
       const dados = criarInventarioSchema.parse(req.body);
-      const item = await service.criar(dados);
+      const usuarioId = req.usuario!.id;
+      const lojaId = req.usuario!.lojaId;
+      const item = await service.realizarInventario(usuarioId, lojaId, dados);
       res.status(201).json(item);
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async atualizar(req: Request, res: Response, next: NextFunction) {
-    try {
-      const dados = atualizarInventarioSchema.parse(req.body);
-      const item = await service.atualizar(req.params.id, dados);
-      res.json(item);
     } catch (err) {
       next(err);
     }

@@ -1,32 +1,39 @@
-// Acesso a dados do módulo entradas
-// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
-// então este repositório sempre lê/escreve no banco local, e a sincronização com o
-// banco central acontece de forma assíncrona (ver shared/database/sync).
 import { getLocalDb } from "../../shared/database/connection";
-import type { Entradas, CriarEntradasInput, AtualizarEntradasInput } from "./entradas.types";
+import type { EntradaEstoque, CriarEntradaInput } from "./entradas.types";
+import { enfileirarParaSincronizacao } from "../../shared/database/sync";
+
+const TABLE_NAME = "estoque_entradas";
 
 export class EntradasRepository {
-  async listar(): Promise<Entradas[]> {
+  async listar(): Promise<EntradaEstoque[]> {
     const db = getLocalDb();
-    // TODO: query real
-    return [];
+    return db.find<EntradaEstoque>(TABLE_NAME);
   }
 
-  async buscarPorId(id: string): Promise<Entradas | null> {
+  async buscarPorId(id: string): Promise<EntradaEstoque | null> {
     const db = getLocalDb();
-    // TODO: query real
-    return null;
+    return db.findById<EntradaEstoque>(TABLE_NAME, id);
   }
 
-  async criar(dados: CriarEntradasInput): Promise<Entradas> {
+  async criar(dados: CriarEntradaInput): Promise<EntradaEstoque> {
     const db = getLocalDb();
-    // TODO: insert real + marcar para sincronização
-    throw new Error("Não implementado");
-  }
+    const agora = new Date();
+    const novaEntrada: EntradaEstoque = {
+      id: `ent_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      produtoId: dados.produtoId,
+      quantidade: dados.quantidade,
+      observacao: dados.observacao,
+      usuarioId: dados.usuarioId,
+      criadoEm: agora,
+    };
 
-  async atualizar(id: string, dados: AtualizarEntradasInput): Promise<Entradas> {
-    const db = getLocalDb();
-    // TODO: update real + marcar para sincronização
-    throw new Error("Não implementado");
+    db.insert<EntradaEstoque>(TABLE_NAME, novaEntrada);
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "insert",
+      payload: novaEntrada,
+    });
+
+    return novaEntrada;
   }
 }

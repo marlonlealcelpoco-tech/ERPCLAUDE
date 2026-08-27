@@ -1,8 +1,9 @@
-// Validação de entrada (zod) do módulo ajustes
 import { z } from "zod";
 
 export const criarAjustesSchema = z.object({
-  // TODO: definir campos obrigatórios de ajustes
+  produtoId: z.string().min(1, "produtoId é obrigatório"),
+  novoEstoque: z.number().nonnegative("Novo estoque não pode ser negativo"),
+  justificativa: z.string().min(3, "Justificativa de ajuste é obrigatória (mínimo 3 caracteres)"),
 });
 
 export const atualizarAjustesSchema = criarAjustesSchema.partial();

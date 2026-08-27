@@ -1,8 +1,17 @@
-// Validação de entrada (zod) do módulo avarias
 import { z } from "zod";
 
+export const tipoAvariaSchema = z.enum([
+  "avaria",
+  "perda",
+  "validade_vencida",
+  "outro",
+]);
+
 export const criarAvariasSchema = z.object({
-  // TODO: definir campos obrigatórios de avarias
+  produtoId: z.string().min(1, "produtoId é obrigatório"),
+  quantidade: z.number().positive("Quantidade deve ser maior que zero"),
+  tipo: tipoAvariaSchema,
+  motivo: z.string().optional(),
 });
 
 export const atualizarAvariasSchema = criarAvariasSchema.partial();

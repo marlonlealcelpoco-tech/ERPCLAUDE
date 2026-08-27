@@ -1,7 +1,6 @@
-// Controller HTTP do módulo entradas
 import type { Request, Response, NextFunction } from "express";
 import { EntradasService } from "./entradas.service";
-import { criarEntradasSchema, atualizarEntradasSchema } from "./entradas.schema";
+import { criarEntradasSchema } from "./entradas.schema";
 
 const service = new EntradasService();
 
@@ -24,21 +23,12 @@ export const entradasController = {
     }
   },
 
-  async criar(req: Request, res: Response, next: NextFunction) {
+  async registrarEntrada(req: Request, res: Response, next: NextFunction) {
     try {
       const dados = criarEntradasSchema.parse(req.body);
-      const item = await service.criar(dados);
+      const usuarioId = req.usuario!.id;
+      const item = await service.registrarEntrada(usuarioId, dados);
       res.status(201).json(item);
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async atualizar(req: Request, res: Response, next: NextFunction) {
-    try {
-      const dados = atualizarEntradasSchema.parse(req.body);
-      const item = await service.atualizar(req.params.id, dados);
-      res.json(item);
     } catch (err) {
       next(err);
     }

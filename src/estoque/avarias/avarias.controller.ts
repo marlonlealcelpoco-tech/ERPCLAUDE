@@ -1,7 +1,6 @@
-// Controller HTTP do módulo avarias
 import type { Request, Response, NextFunction } from "express";
 import { AvariasService } from "./avarias.service";
-import { criarAvariasSchema, atualizarAvariasSchema } from "./avarias.schema";
+import { criarAvariasSchema } from "./avarias.schema";
 
 const service = new AvariasService();
 
@@ -24,21 +23,12 @@ export const avariasController = {
     }
   },
 
-  async criar(req: Request, res: Response, next: NextFunction) {
+  async registrarAvaria(req: Request, res: Response, next: NextFunction) {
     try {
       const dados = criarAvariasSchema.parse(req.body);
-      const item = await service.criar(dados);
+      const usuarioId = req.usuario!.id;
+      const item = await service.registrarAvaria(usuarioId, dados);
       res.status(201).json(item);
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async atualizar(req: Request, res: Response, next: NextFunction) {
-    try {
-      const dados = atualizarAvariasSchema.parse(req.body);
-      const item = await service.atualizar(req.params.id, dados);
-      res.json(item);
     } catch (err) {
       next(err);
     }

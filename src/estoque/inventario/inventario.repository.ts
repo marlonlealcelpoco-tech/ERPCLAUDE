@@ -1,32 +1,39 @@
-// Acesso a dados do módulo inventario
-// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
-// então este repositório sempre lê/escreve no banco local, e a sincronização com o
-// banco central acontece de forma assíncrona (ver shared/database/sync).
 import { getLocalDb } from "../../shared/database/connection";
-import type { Inventario, CriarInventarioInput, AtualizarInventarioInput } from "./inventario.types";
+import type { InventarioEstoque, CriarInventarioInput } from "./inventario.types";
+import { enfileirarParaSincronizacao } from "../../shared/database/sync";
+
+const TABLE_NAME = "estoque_inventarios";
 
 export class InventarioRepository {
-  async listar(): Promise<Inventario[]> {
+  async listar(): Promise<InventarioEstoque[]> {
     const db = getLocalDb();
-    // TODO: query real
-    return [];
+    return db.find<InventarioEstoque>(TABLE_NAME);
   }
 
-  async buscarPorId(id: string): Promise<Inventario | null> {
+  async buscarPorId(id: string): Promise<InventarioEstoque | null> {
     const db = getLocalDb();
-    // TODO: query real
-    return null;
+    return db.findById<InventarioEstoque>(TABLE_NAME, id);
   }
 
-  async criar(dados: CriarInventarioInput): Promise<Inventario> {
+  async criar(dados: CriarInventarioInput): Promise<InventarioEstoque> {
     const db = getLocalDb();
-    // TODO: insert real + marcar para sincronização
-    throw new Error("Não implementado");
-  }
+    const agora = new Date();
+    const novoInventario: InventarioEstoque = {
+      id: `inv_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      usuarioId: dados.usuarioId,
+      lojaId: dados.lojaId,
+      itens: dados.itens,
+      observacao: dados.observacao,
+      criadoEm: agora,
+    };
 
-  async atualizar(id: string, dados: AtualizarInventarioInput): Promise<Inventario> {
-    const db = getLocalDb();
-    // TODO: update real + marcar para sincronização
-    throw new Error("Não implementado");
+    db.insert<InventarioEstoque>(TABLE_NAME, novoInventario);
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "insert",
+      payload: novoInventario,
+    });
+
+    return novoInventario;
   }
 }

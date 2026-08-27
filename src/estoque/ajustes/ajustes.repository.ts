@@ -1,32 +1,41 @@
-// Acesso a dados do módulo ajustes
-// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
-// então este repositório sempre lê/escreve no banco local, e a sincronização com o
-// banco central acontece de forma assíncrona (ver shared/database/sync).
 import { getLocalDb } from "../../shared/database/connection";
-import type { Ajustes, CriarAjustesInput, AtualizarAjustesInput } from "./ajustes.types";
+import type { AjusteEstoque, CriarAjusteInput } from "./ajustes.types";
+import { enfileirarParaSincronizacao } from "../../shared/database/sync";
+
+const TABLE_NAME = "estoque_ajustes";
 
 export class AjustesRepository {
-  async listar(): Promise<Ajustes[]> {
+  async listar(): Promise<AjusteEstoque[]> {
     const db = getLocalDb();
-    // TODO: query real
-    return [];
+    return db.find<AjusteEstoque>(TABLE_NAME);
   }
 
-  async buscarPorId(id: string): Promise<Ajustes | null> {
+  async buscarPorId(id: string): Promise<AjusteEstoque | null> {
     const db = getLocalDb();
-    // TODO: query real
-    return null;
+    return db.findById<AjusteEstoque>(TABLE_NAME, id);
   }
 
-  async criar(dados: CriarAjustesInput): Promise<Ajustes> {
+  async criar(dados: CriarAjusteInput): Promise<AjusteEstoque> {
     const db = getLocalDb();
-    // TODO: insert real + marcar para sincronização
-    throw new Error("Não implementado");
-  }
+    const agora = new Date();
+    const novoAjuste: AjusteEstoque = {
+      id: `ajs_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      produtoId: dados.produtoId,
+      estoqueAnterior: dados.estoqueAnterior,
+      novoEstoque: dados.novoEstoque,
+      diferenca: dados.diferenca,
+      justificativa: dados.justificativa,
+      usuarioId: dados.usuarioId,
+      criadoEm: agora,
+    };
 
-  async atualizar(id: string, dados: AtualizarAjustesInput): Promise<Ajustes> {
-    const db = getLocalDb();
-    // TODO: update real + marcar para sincronização
-    throw new Error("Não implementado");
+    db.insert<AjusteEstoque>(TABLE_NAME, novoAjuste);
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "insert",
+      payload: novoAjuste,
+    });
+
+    return novoAjuste;
   }
 }

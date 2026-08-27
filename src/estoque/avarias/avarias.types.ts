@@ -1,16 +1,19 @@
-// Tipos do módulo avarias
-// TODO: substituir por tipos reais conforme desenho-erp.md
+export type TipoAvaria = "avaria" | "perda" | "validade_vencida" | "outro";
 
-export interface Avarias {
+export interface AvariaEstoque {
   id: string;
+  produtoId: string;
+  quantidade: number;
+  tipo: TipoAvaria;
+  motivo?: string;
+  usuarioId: string;
   criadoEm: Date;
-  atualizadoEm: Date;
 }
 
-export interface CriarAvariasInput {
-  // TODO: campos de criação
-}
-
-export interface AtualizarAvariasInput {
-  // TODO: campos de atualização
+export interface CriarAvariaInput {
+  produtoId: string;
+  quantidade: number;
+  tipo: TipoAvaria;
+  motivo?: string;
+  usuarioId: string;
 }

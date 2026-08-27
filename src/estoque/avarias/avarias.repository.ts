@@ -1,32 +1,40 @@
-// Acesso a dados do módulo avarias
-// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
-// então este repositório sempre lê/escreve no banco local, e a sincronização com o
-// banco central acontece de forma assíncrona (ver shared/database/sync).
 import { getLocalDb } from "../../shared/database/connection";
-import type { Avarias, CriarAvariasInput, AtualizarAvariasInput } from "./avarias.types";
+import type { AvariaEstoque, CriarAvariaInput } from "./avarias.types";
+import { enfileirarParaSincronizacao } from "../../shared/database/sync";
+
+const TABLE_NAME = "estoque_avarias";
 
 export class AvariasRepository {
-  async listar(): Promise<Avarias[]> {
+  async listar(): Promise<AvariaEstoque[]> {
     const db = getLocalDb();
-    // TODO: query real
-    return [];
+    return db.find<AvariaEstoque>(TABLE_NAME);
   }
 
-  async buscarPorId(id: string): Promise<Avarias | null> {
+  async buscarPorId(id: string): Promise<AvariaEstoque | null> {
     const db = getLocalDb();
-    // TODO: query real
-    return null;
+    return db.findById<AvariaEstoque>(TABLE_NAME, id);
   }
 
-  async criar(dados: CriarAvariasInput): Promise<Avarias> {
+  async criar(dados: CriarAvariaInput): Promise<AvariaEstoque> {
     const db = getLocalDb();
-    // TODO: insert real + marcar para sincronização
-    throw new Error("Não implementado");
-  }
+    const agora = new Date();
+    const novaAvaria: AvariaEstoque = {
+      id: `avr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      produtoId: dados.produtoId,
+      quantidade: dados.quantidade,
+      tipo: dados.tipo,
+      motivo: dados.motivo,
+      usuarioId: dados.usuarioId,
+      criadoEm: agora,
+    };
 
-  async atualizar(id: string, dados: AtualizarAvariasInput): Promise<Avarias> {
-    const db = getLocalDb();
-    // TODO: update real + marcar para sincronização
-    throw new Error("Não implementado");
+    db.insert<AvariaEstoque>(TABLE_NAME, novaAvaria);
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "insert",
+      payload: novaAvaria,
+    });
+
+    return novaAvaria;
   }
 }

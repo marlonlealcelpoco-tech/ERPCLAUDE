@@ -1,29 +1,45 @@
-// Regras de negócio do módulo avarias
 import { AvariasRepository } from "./avarias.repository";
-import type { CriarAvariasDto, AtualizarAvariasDto } from "./avarias.schema";
-import type { Avarias } from "./avarias.types";
-import { NotFoundError } from "../../shared/errors/app-error";
+import { ProdutosRepository } from "../../cadastro/produtos/produtos.repository";
+import type { CriarAvariasDto } from "./avarias.schema";
+import type { AvariaEstoque } from "./avarias.types";
+import { NotFoundError, ValidationError } from "../../shared/errors/app-error";
 
 export class AvariasService {
-  constructor(private readonly repo: AvariasRepository = new AvariasRepository()) {}
+  constructor(
+    private readonly repo: AvariasRepository = new AvariasRepository(),
+    private readonly produtosRepo: ProdutosRepository = new ProdutosRepository()
+  ) {}
 
-  async listar(): Promise<Avarias[]> {
+  async listar(): Promise<AvariaEstoque[]> {
     return this.repo.listar();
   }
 
-  async buscarPorId(id: string): Promise<Avarias> {
+  async buscarPorId(id: string): Promise<AvariaEstoque> {
     const item = await this.repo.buscarPorId(id);
-    if (!item) throw new NotFoundError("Avarias não encontrado");
+    if (!item) throw new NotFoundError("Avaria/Baixa não encontrada");
     return item;
   }
 
-  async criar(dados: CriarAvariasDto): Promise<Avarias> {
-    // TODO: regras de negócio específicas de avarias
-    return this.repo.criar(dados as any);
-  }
+  async registrarAvaria(usuarioId: string, dados: CriarAvariasDto): Promise<AvariaEstoque> {
+    const produto = await this.produtosRepo.buscarPorId(dados.produtoId);
+    if (!produto) {
+      throw new NotFoundError("Produto não encontrado");
+    }
 
-  async atualizar(id: string, dados: AtualizarAvariasDto): Promise<Avarias> {
-    await this.buscarPorId(id);
-    return this.repo.atualizar(id, dados as any);
+    if (produto.estoqueAtual < dados.quantidade) {
+      throw new ValidationError(`Estoque insuficiente para registrar baixa por avaria/perda em ${produto.nome}`);
+    }
+
+    await this.produtosRepo.atualizar(produto.id, {
+      estoqueAtual: produto.estoqueAtual - dados.quantidade,
+    });
+
+    return this.repo.criar({
+      produtoId: dados.produtoId,
+      quantidade: dados.quantidade,
+      tipo: dados.tipo,
+      motivo: dados.motivo,
+      usuarioId,
+    });
   }
 }

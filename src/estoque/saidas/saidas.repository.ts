@@ -1,32 +1,39 @@
-// Acesso a dados do módulo saidas
-// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
-// então este repositório sempre lê/escreve no banco local, e a sincronização com o
-// banco central acontece de forma assíncrona (ver shared/database/sync).
 import { getLocalDb } from "../../shared/database/connection";
-import type { Saidas, CriarSaidasInput, AtualizarSaidasInput } from "./saidas.types";
+import type { SaidaEstoque, CriarSaidaInput } from "./saidas.types";
+import { enfileirarParaSincronizacao } from "../../shared/database/sync";
+
+const TABLE_NAME = "estoque_saidas";
 
 export class SaidasRepository {
-  async listar(): Promise<Saidas[]> {
+  async listar(): Promise<SaidaEstoque[]> {
     const db = getLocalDb();
-    // TODO: query real
-    return [];
+    return db.find<SaidaEstoque>(TABLE_NAME);
   }
 
-  async buscarPorId(id: string): Promise<Saidas | null> {
+  async buscarPorId(id: string): Promise<SaidaEstoque | null> {
     const db = getLocalDb();
-    // TODO: query real
-    return null;
+    return db.findById<SaidaEstoque>(TABLE_NAME, id);
   }
 
-  async criar(dados: CriarSaidasInput): Promise<Saidas> {
+  async criar(dados: CriarSaidaInput): Promise<SaidaEstoque> {
     const db = getLocalDb();
-    // TODO: insert real + marcar para sincronização
-    throw new Error("Não implementado");
-  }
+    const agora = new Date();
+    const novaSaida: SaidaEstoque = {
+      id: `sai_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      produtoId: dados.produtoId,
+      quantidade: dados.quantidade,
+      motivo: dados.motivo,
+      usuarioId: dados.usuarioId,
+      criadoEm: agora,
+    };
 
-  async atualizar(id: string, dados: AtualizarSaidasInput): Promise<Saidas> {
-    const db = getLocalDb();
-    // TODO: update real + marcar para sincronização
-    throw new Error("Não implementado");
+    db.insert<SaidaEstoque>(TABLE_NAME, novaSaida);
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "insert",
+      payload: novaSaida,
+    });
+
+    return novaSaida;
   }
 }

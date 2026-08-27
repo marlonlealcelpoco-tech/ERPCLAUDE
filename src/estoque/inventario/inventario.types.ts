@@ -1,16 +1,23 @@
-// Tipos do módulo inventario
-// TODO: substituir por tipos reais conforme desenho-erp.md
+export interface ItemInventario {
+  produtoId: string;
+  nomeProduto: string;
+  quantidadeContada: number;
+  quantidadeSistema: number;
+  diferenca: number;
+}
 
-export interface Inventario {
+export interface InventarioEstoque {
   id: string;
+  usuarioId: string;
+  lojaId: string;
+  itens: ItemInventario[];
+  observacao?: string;
   criadoEm: Date;
-  atualizadoEm: Date;
 }
 
 export interface CriarInventarioInput {
-  // TODO: campos de criação
-}
-
-export interface AtualizarInventarioInput {
-  // TODO: campos de atualização
+  usuarioId: string;
+  lojaId: string;
+  itens: ItemInventario[];
+  observacao?: string;
 }
