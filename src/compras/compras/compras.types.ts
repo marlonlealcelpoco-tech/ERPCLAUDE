@@ -1,16 +1,42 @@
-// Tipos do módulo compras
-// TODO: substituir por tipos reais conforme desenho-erp.md
+export interface ItemCompra {
+  produtoId: string;
+  nomeProduto: string;
+  quantidade: number;
+  precoCusto: number;
+  valorTotal: number;
+}
 
-export interface Compras {
+export interface Compra {
   id: string;
+  numeroNota: string;
+  fornecedorId: string;
+  lojaId: string;
+  tipo: "manual" | "xml";
+  formaPagamento: "a_vista" | "a_prazo";
+  numeroParcelas: number;
+  valorTotal: number;
+  itens: ItemCompra[];
+  usuarioId: string;
   criadoEm: Date;
-  atualizadoEm: Date;
 }
 
-export interface CriarComprasInput {
-  // TODO: campos de criação
+export interface ItemCompraInput {
+  produtoId?: string;
+  nomeProduto: string;
+  codigoBarras?: string;
+  quantidade: number;
+  precoCusto: number;
+  precoVenda?: number;
 }
 
-export interface AtualizarComprasInput {
-  // TODO: campos de atualização
+export interface CriarCompraInput {
+  numeroNota: string;
+  fornecedorId: string;
+  lojaId: string;
+  tipo: "manual" | "xml";
+  formaPagamento: "a_vista" | "a_prazo";
+  numeroParcelas?: number;
+  diasIntervaloParcelas?: number;
+  itens: ItemCompraInput[];
+  usuarioId: string;
 }

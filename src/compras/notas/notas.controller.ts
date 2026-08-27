@@ -1,7 +1,6 @@
-// Controller HTTP do módulo notas
 import type { Request, Response, NextFunction } from "express";
 import { NotasService } from "./notas.service";
-import { criarNotasSchema, atualizarNotasSchema } from "./notas.schema";
+import { criarNotasSchema } from "./notas.schema";
 
 const service = new NotasService();
 
@@ -24,21 +23,11 @@ export const notasController = {
     }
   },
 
-  async criar(req: Request, res: Response, next: NextFunction) {
+  async registrarNota(req: Request, res: Response, next: NextFunction) {
     try {
       const dados = criarNotasSchema.parse(req.body);
-      const item = await service.criar(dados);
+      const item = await service.registrarNota(dados);
       res.status(201).json(item);
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async atualizar(req: Request, res: Response, next: NextFunction) {
-    try {
-      const dados = atualizarNotasSchema.parse(req.body);
-      const item = await service.atualizar(req.params.id, dados);
-      res.json(item);
     } catch (err) {
       next(err);
     }
