@@ -1,16 +1,28 @@
-// Tipos do módulo contas-pagar
-// TODO: substituir por tipos reais conforme desenho-erp.md
-
-export interface ContasPagar {
+export interface ContaPagar {
   id: string;
+  compraId?: string;
+  fornecedorId: string;
+  descricao: string;
+  valorOriginal: number;
+  valorPago: number;
+  status: "pendente" | "pago_parcial" | "pago";
+  dataVencimento: Date;
+  dataPagamento?: Date;
+  lojaId: string;
   criadoEm: Date;
   atualizadoEm: Date;
 }
 
-export interface CriarContasPagarInput {
-  // TODO: campos de criação
+export interface CriarContaPagarInput {
+  compraId?: string;
+  fornecedorId: string;
+  descricao: string;
+  valorOriginal: number;
+  dataVencimento: Date;
+  lojaId: string;
 }
 
-export interface AtualizarContasPagarInput {
-  // TODO: campos de atualização
+export interface BaixarContaPagarInput {
+  valorPago: number;
+  dataPagamento?: Date;
 }

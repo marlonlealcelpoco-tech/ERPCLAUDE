@@ -1,11 +1,7 @@
-// Validação de entrada (zod) do módulo contas-receber
 import { z } from "zod";
 
-export const criarContasReceberSchema = z.object({
-  // TODO: definir campos obrigatórios de contas-receber
+export const filtroContasReceberSchema = z.object({
+  clienteId: z.string().optional(),
 });
 
-export const atualizarContasReceberSchema = criarContasReceberSchema.partial();
-
-export type CriarContasReceberDto = z.infer<typeof criarContasReceberSchema>;
-export type AtualizarContasReceberDto = z.infer<typeof atualizarContasReceberSchema>;
+export type FiltroContasReceberDto = z.infer<typeof filtroContasReceberSchema>;

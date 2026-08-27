@@ -1,16 +1,19 @@
-// Tipos do módulo conciliacao
-// TODO: substituir por tipos reais conforme desenho-erp.md
-
-export interface Conciliacao {
+export interface ConciliacaoBancaria {
   id: string;
+  lojaId: string;
+  data: Date;
+  saldoExtrato: number;
+  saldoSistema: number;
+  diferenca: number;
+  conciliado: boolean;
+  observacao?: string;
   criadoEm: Date;
-  atualizadoEm: Date;
 }
 
 export interface CriarConciliacaoInput {
-  // TODO: campos de criação
-}
-
-export interface AtualizarConciliacaoInput {
-  // TODO: campos de atualização
+  lojaId: string;
+  data: Date;
+  saldoExtrato: number;
+  saldoSistema: number;
+  observacao?: string;
 }

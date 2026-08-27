@@ -1,32 +1,45 @@
-// Acesso a dados do módulo conciliacao
-// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
-// então este repositório sempre lê/escreve no banco local, e a sincronização com o
-// banco central acontece de forma assíncrona (ver shared/database/sync).
 import { getLocalDb } from "../../shared/database/connection";
-import type { Conciliacao, CriarConciliacaoInput, AtualizarConciliacaoInput } from "./conciliacao.types";
+import type { ConciliacaoBancaria, CriarConciliacaoInput } from "./conciliacao.types";
+import { enfileirarParaSincronizacao } from "../../shared/database/sync";
+
+const TABLE_NAME = "conciliacoes";
 
 export class ConciliacaoRepository {
-  async listar(): Promise<Conciliacao[]> {
+  async listar(): Promise<ConciliacaoBancaria[]> {
     const db = getLocalDb();
-    // TODO: query real
-    return [];
+    return db.find<ConciliacaoBancaria>(TABLE_NAME);
   }
 
-  async buscarPorId(id: string): Promise<Conciliacao | null> {
+  async buscarPorId(id: string): Promise<ConciliacaoBancaria | null> {
     const db = getLocalDb();
-    // TODO: query real
-    return null;
+    return db.findById<ConciliacaoBancaria>(TABLE_NAME, id);
   }
 
-  async criar(dados: CriarConciliacaoInput): Promise<Conciliacao> {
+  async criar(dados: CriarConciliacaoInput): Promise<ConciliacaoBancaria> {
     const db = getLocalDb();
-    // TODO: insert real + marcar para sincronização
-    throw new Error("Não implementado");
-  }
+    const agora = new Date();
+    const diferenca = dados.saldoExtrato - dados.saldoSistema;
+    const conciliado = diferenca === 0;
 
-  async atualizar(id: string, dados: AtualizarConciliacaoInput): Promise<Conciliacao> {
-    const db = getLocalDb();
-    // TODO: update real + marcar para sincronização
-    throw new Error("Não implementado");
+    const nova: ConciliacaoBancaria = {
+      id: `cnc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      lojaId: dados.lojaId,
+      data: dados.data,
+      saldoExtrato: dados.saldoExtrato,
+      saldoSistema: dados.saldoSistema,
+      diferenca,
+      conciliado,
+      observacao: dados.observacao,
+      criadoEm: agora,
+    };
+
+    db.insert<ConciliacaoBancaria>(TABLE_NAME, nova);
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "insert",
+      payload: nova,
+    });
+
+    return nova;
   }
 }

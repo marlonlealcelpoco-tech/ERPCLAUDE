@@ -1,32 +1,43 @@
-// Acesso a dados do módulo contas-receber
-// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
-// então este repositório sempre lê/escreve no banco local, e a sincronização com o
-// banco central acontece de forma assíncrona (ver shared/database/sync).
-import { getLocalDb } from "../../shared/database/connection";
-import type { ContasReceber, CriarContasReceberInput, AtualizarContasReceberInput } from "./contas-receber.types";
+import { ClientesRepository } from "../../cadastro/clientes/clientes.repository";
+import { RecebimentosRepository } from "../../caixa/recebimentos/recebimentos.repository";
+import type { DemonstrativoContasReceber, RelatorioContasReceberCliente } from "./contas-receber.types";
 
 export class ContasReceberRepository {
-  async listar(): Promise<ContasReceber[]> {
-    const db = getLocalDb();
-    // TODO: query real
-    return [];
-  }
+  constructor(
+    private readonly clientesRepo: ClientesRepository = new ClientesRepository(),
+    private readonly recebimentosRepo: RecebimentosRepository = new RecebimentosRepository()
+  ) {}
 
-  async buscarPorId(id: string): Promise<ContasReceber | null> {
-    const db = getLocalDb();
-    // TODO: query real
-    return null;
-  }
+  async obterDemonstrativo(): Promise<DemonstrativoContasReceber> {
+    const clientes = await this.clientesRepo.listar();
+    const recebimentos = await this.recebimentosRepo.listar();
 
-  async criar(dados: CriarContasReceberInput): Promise<ContasReceber> {
-    const db = getLocalDb();
-    // TODO: insert real + marcar para sincronização
-    throw new Error("Não implementado");
-  }
+    const clientesRelatorio: RelatorioContasReceberCliente[] = [];
+    let totalGeralAReceber = 0;
+    let totalGeralRecebido = 0;
 
-  async atualizar(id: string, dados: AtualizarContasReceberInput): Promise<ContasReceber> {
-    const db = getLocalDb();
-    // TODO: update real + marcar para sincronização
-    throw new Error("Não implementado");
+    for (const c of clientes) {
+      const recebidosDoCliente = recebimentos
+        .filter((r) => r.clienteId === c.id)
+        .reduce((acc, r) => acc + r.valorRecebido, 0);
+
+      totalGeralAReceber += c.saldoDevedor || 0;
+      totalGeralRecebido += recebidosDoCliente;
+
+      if ((c.saldoDevedor || 0) > 0 || recebidosDoCliente > 0) {
+        clientesRelatorio.push({
+          clienteId: c.id,
+          nomeCliente: c.nome,
+          saldoDevedorTotal: c.saldoDevedor || 0,
+          totalRecebido: recebidosDoCliente,
+        });
+      }
+    }
+
+    return {
+      totalGeralRecebido,
+      totalGeralAReceber,
+      clientes: clientesRelatorio,
+    };
   }
 }
