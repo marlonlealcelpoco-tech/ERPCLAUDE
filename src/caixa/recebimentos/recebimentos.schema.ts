@@ -1,8 +1,9 @@
-// Validação de entrada (zod) do módulo recebimentos
 import { z } from "zod";
 
 export const criarRecebimentosSchema = z.object({
-  // TODO: definir campos obrigatórios de recebimentos
+  clienteId: z.string().min(1, "clienteId é obrigatório"),
+  valorRecebido: z.number().positive("Valor recebido deve ser maior que zero"),
+  formaPagamento: z.enum(["dinheiro", "debito", "credito", "pix"]),
 });
 
 export const atualizarRecebimentosSchema = criarRecebimentosSchema.partial();

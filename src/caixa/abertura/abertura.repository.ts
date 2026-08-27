@@ -1,32 +1,64 @@
-// Acesso a dados do módulo abertura
-// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
-// então este repositório sempre lê/escreve no banco local, e a sincronização com o
-// banco central acontece de forma assíncrona (ver shared/database/sync).
 import { getLocalDb } from "../../shared/database/connection";
-import type { Abertura, CriarAberturaInput, AtualizarAberturaInput } from "./abertura.types";
+import type { CaixaAbertura, CriarAberturaInput } from "./abertura.types";
+import { enfileirarParaSincronizacao } from "../../shared/database/sync";
+
+const TABLE_NAME = "caixas";
 
 export class AberturaRepository {
-  async listar(): Promise<Abertura[]> {
+  async listar(): Promise<CaixaAbertura[]> {
     const db = getLocalDb();
-    // TODO: query real
-    return [];
+    return db.find<CaixaAbertura>(TABLE_NAME);
   }
 
-  async buscarPorId(id: string): Promise<Abertura | null> {
+  async buscarPorId(id: string): Promise<CaixaAbertura | null> {
     const db = getLocalDb();
-    // TODO: query real
-    return null;
+    return db.findById<CaixaAbertura>(TABLE_NAME, id);
   }
 
-  async criar(dados: CriarAberturaInput): Promise<Abertura> {
+  async buscarCaixaAbertoPorUsuario(usuarioId: string): Promise<CaixaAbertura | null> {
     const db = getLocalDb();
-    // TODO: insert real + marcar para sincronização
-    throw new Error("Não implementado");
+    const [caixa] = db.find<CaixaAbertura>(
+      TABLE_NAME,
+      (c) => c.usuarioId === usuarioId && c.status === "aberto"
+    );
+    return caixa || null;
   }
 
-  async atualizar(id: string, dados: AtualizarAberturaInput): Promise<Abertura> {
+  async criar(dados: CriarAberturaInput): Promise<CaixaAbertura> {
     const db = getLocalDb();
-    // TODO: update real + marcar para sincronização
-    throw new Error("Não implementado");
+    const agora = new Date();
+    const novoCaixa: CaixaAbertura = {
+      id: `cx_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      usuarioId: dados.usuarioId,
+      lojaId: dados.lojaId,
+      valorInicial: dados.valorInicial,
+      status: "aberto",
+      abertoEm: agora,
+    };
+
+    db.insert<CaixaAbertura>(TABLE_NAME, novoCaixa);
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "insert",
+      payload: novoCaixa,
+    });
+
+    return novoCaixa;
+  }
+
+  async fecharCaixa(id: string): Promise<CaixaAbertura> {
+    const db = getLocalDb();
+    const fechado = db.update<CaixaAbertura>(TABLE_NAME, id, {
+      status: "fechado",
+      fechadoEm: new Date(),
+    });
+
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "update",
+      payload: fechado,
+    });
+
+    return fechado;
   }
 }

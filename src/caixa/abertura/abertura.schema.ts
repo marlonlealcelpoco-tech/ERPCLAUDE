@@ -1,8 +1,7 @@
-// Validação de entrada (zod) do módulo abertura
 import { z } from "zod";
 
 export const criarAberturaSchema = z.object({
-  // TODO: definir campos obrigatórios de abertura
+  valorInicial: z.number().nonnegative("Valor inicial não pode ser negativo"),
 });
 
 export const atualizarAberturaSchema = criarAberturaSchema.partial();

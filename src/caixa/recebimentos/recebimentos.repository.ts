@@ -1,32 +1,46 @@
-// Acesso a dados do módulo recebimentos
-// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
-// então este repositório sempre lê/escreve no banco local, e a sincronização com o
-// banco central acontece de forma assíncrona (ver shared/database/sync).
 import { getLocalDb } from "../../shared/database/connection";
-import type { Recebimentos, CriarRecebimentosInput, AtualizarRecebimentosInput } from "./recebimentos.types";
+import type { RecebimentoCliente, CriarRecebimentoInput } from "./recebimentos.types";
+import { enfileirarParaSincronizacao } from "../../shared/database/sync";
+
+const TABLE_NAME = "recebimentos";
 
 export class RecebimentosRepository {
-  async listar(): Promise<Recebimentos[]> {
+  async listar(): Promise<RecebimentoCliente[]> {
     const db = getLocalDb();
-    // TODO: query real
-    return [];
+    return db.find<RecebimentoCliente>(TABLE_NAME);
   }
 
-  async buscarPorId(id: string): Promise<Recebimentos | null> {
+  async buscarPorId(id: string): Promise<RecebimentoCliente | null> {
     const db = getLocalDb();
-    // TODO: query real
-    return null;
+    return db.findById<RecebimentoCliente>(TABLE_NAME, id);
   }
 
-  async criar(dados: CriarRecebimentosInput): Promise<Recebimentos> {
+  async buscarPorCaixaId(caixaId: string): Promise<RecebimentoCliente[]> {
     const db = getLocalDb();
-    // TODO: insert real + marcar para sincronização
-    throw new Error("Não implementado");
+    return db.find<RecebimentoCliente>(TABLE_NAME, (r) => r.caixaId === caixaId);
   }
 
-  async atualizar(id: string, dados: AtualizarRecebimentosInput): Promise<Recebimentos> {
+  async criar(dados: CriarRecebimentoInput): Promise<RecebimentoCliente> {
     const db = getLocalDb();
-    // TODO: update real + marcar para sincronização
-    throw new Error("Não implementado");
+    const agora = new Date();
+    const novoRecebimento: RecebimentoCliente = {
+      id: `rec_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      caixaId: dados.caixaId,
+      vendedorId: dados.vendedorId,
+      clienteId: dados.clienteId,
+      nomeCliente: dados.nomeCliente,
+      valorRecebido: dados.valorRecebido,
+      formaPagamento: dados.formaPagamento,
+      criadoEm: agora,
+    };
+
+    db.insert<RecebimentoCliente>(TABLE_NAME, novoRecebimento);
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "insert",
+      payload: novoRecebimento,
+    });
+
+    return novoRecebimento;
   }
 }

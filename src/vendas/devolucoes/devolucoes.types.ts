@@ -1,16 +1,17 @@
-// Tipos do módulo devolucoes
-// TODO: substituir por tipos reais conforme desenho-erp.md
-
-export interface Devolucoes {
+export interface CancelamentoVenda {
   id: string;
+  vendaId: string;
+  produtoId?: string;
+  autorizadoPorId: string;
+  motivo?: string;
+  restaurarEstoque: boolean;
   criadoEm: Date;
-  atualizadoEm: Date;
 }
 
-export interface CriarDevolucoesInput {
-  // TODO: campos de criação
-}
-
-export interface AtualizarDevolucoesInput {
-  // TODO: campos de atualização
+export interface CriarCancelamentoInput {
+  vendaId: string;
+  produtoId?: string;
+  autorizadoPorId: string;
+  motivo?: string;
+  restaurarEstoque?: boolean;
 }

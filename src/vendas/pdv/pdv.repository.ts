@@ -1,32 +1,48 @@
-// Acesso a dados do módulo pdv
-// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
-// então este repositório sempre lê/escreve no banco local, e a sincronização com o
-// banco central acontece de forma assíncrona (ver shared/database/sync).
 import { getLocalDb } from "../../shared/database/connection";
-import type { Pdv, CriarPdvInput, AtualizarPdvInput } from "./pdv.types";
+import type { VendaPDV } from "./pdv.types";
+import { enfileirarParaSincronizacao } from "../../shared/database/sync";
+
+const TABLE_NAME = "vendas";
 
 export class PdvRepository {
-  async listar(): Promise<Pdv[]> {
+  async listar(): Promise<VendaPDV[]> {
     const db = getLocalDb();
-    // TODO: query real
-    return [];
+    return db.find<VendaPDV>(TABLE_NAME);
   }
 
-  async buscarPorId(id: string): Promise<Pdv | null> {
+  async buscarPorId(id: string): Promise<VendaPDV | null> {
     const db = getLocalDb();
-    // TODO: query real
-    return null;
+    return db.findById<VendaPDV>(TABLE_NAME, id);
   }
 
-  async criar(dados: CriarPdvInput): Promise<Pdv> {
+  async buscarPorCaixaId(caixaId: string): Promise<VendaPDV[]> {
     const db = getLocalDb();
-    // TODO: insert real + marcar para sincronização
-    throw new Error("Não implementado");
+    return db.find<VendaPDV>(TABLE_NAME, (v) => v.caixaId === caixaId);
   }
 
-  async atualizar(id: string, dados: AtualizarPdvInput): Promise<Pdv> {
+  async criar(venda: VendaPDV): Promise<VendaPDV> {
     const db = getLocalDb();
-    // TODO: update real + marcar para sincronização
-    throw new Error("Não implementado");
+    db.insert<VendaPDV>(TABLE_NAME, venda);
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "insert",
+      payload: venda,
+    });
+    return venda;
+  }
+
+  async cancelarVenda(id: string, canceladoPor: string): Promise<VendaPDV> {
+    const db = getLocalDb();
+    const atualizada = db.update<VendaPDV>(TABLE_NAME, id, {
+      status: "cancelada",
+      canceladoEm: new Date(),
+      canceladoPor,
+    });
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "update",
+      payload: atualizada,
+    });
+    return atualizada;
   }
 }

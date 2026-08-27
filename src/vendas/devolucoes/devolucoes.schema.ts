@@ -1,8 +1,10 @@
-// Validação de entrada (zod) do módulo devolucoes
 import { z } from "zod";
 
 export const criarDevolucoesSchema = z.object({
-  // TODO: definir campos obrigatórios de devolucoes
+  vendaId: z.string().min(1, "vendaId é obrigatório"),
+  produtoId: z.string().optional(),
+  motivo: z.string().optional(),
+  restaurarEstoque: z.boolean().default(true),
 });
 
 export const atualizarDevolucoesSchema = criarDevolucoesSchema.partial();

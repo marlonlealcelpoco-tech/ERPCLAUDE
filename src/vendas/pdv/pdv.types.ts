@@ -1,16 +1,37 @@
-// Tipos do módulo pdv
-// TODO: substituir por tipos reais conforme desenho-erp.md
+export type FormaPagamento = "dinheiro" | "debito" | "credito" | "pix" | "a_prazo";
 
-export interface Pdv {
+export interface ItemVenda {
+  produtoId: string;
+  nomeProduto: string;
+  quantidade: number;
+  precoUnitario: number;
+  valorTotal: number;
+}
+
+export interface VendaPDV {
   id: string;
+  caixaId: string;
+  vendedorId: string;
+  lojaId: string;
+  clienteId?: string;
+  itens: ItemVenda[];
+  formaPagamento: FormaPagamento;
+  valorTotal: number;
+  status: "concluida" | "cancelada";
+  comNfce: boolean;
   criadoEm: Date;
-  atualizadoEm: Date;
+  canceladoEm?: Date;
+  canceladoPor?: string;
 }
 
-export interface CriarPdvInput {
-  // TODO: campos de criação
-}
-
-export interface AtualizarPdvInput {
-  // TODO: campos de atualização
+export interface CriarVendaPDVInput {
+  vendedorId: string;
+  lojaId: string;
+  clienteId?: string;
+  itens: {
+    produtoId: string;
+    quantidade: number;
+  }[];
+  formaPagamento: FormaPagamento;
+  comNfce?: boolean;
 }

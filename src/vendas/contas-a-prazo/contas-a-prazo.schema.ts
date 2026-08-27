@@ -1,11 +1,14 @@
-// Validação de entrada (zod) do módulo contas-a-prazo
 import { z } from "zod";
 
 export const criarContasAPrazoSchema = z.object({
-  // TODO: definir campos obrigatórios de contas-a-prazo
+  vendaId: z.string().min(1, "vendaId é obrigatório"),
+  clienteId: z.string().min(1, "clienteId é obrigatório"),
+  valorOriginal: z.number().positive("Valor original deve ser maior que zero"),
 });
 
-export const atualizarContasAPrazoSchema = criarContasAPrazoSchema.partial();
+export const atualizarContasAPrazoSchema = z.object({
+  valorSaldo: z.number().nonnegative("Valor saldo não pode ser negativo").optional(),
+});
 
 export type CriarContasAPrazoDto = z.infer<typeof criarContasAPrazoSchema>;
 export type AtualizarContasAPrazoDto = z.infer<typeof atualizarContasAPrazoSchema>;
