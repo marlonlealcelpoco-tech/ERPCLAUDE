@@ -1,16 +1,51 @@
-// Tipos do módulo relatorios
-// TODO: substituir por tipos reais conforme desenho-erp.md
-
-export interface Relatorios {
-  id: string;
-  criadoEm: Date;
-  atualizadoEm: Date;
+export interface RelatorioContasReceberGeral {
+  totalRecebido: number;
+  totalAReceber: number;
+  detalhamentoPorCliente: {
+    clienteId: string;
+    nomeCliente: string;
+    saldoDevedor: number;
+    totalRecebido: number;
+  }[];
 }
 
-export interface CriarRelatoriosInput {
-  // TODO: campos de criação
+export interface RelatorioContasPagarGeral {
+  totalPago: number;
+  totalAPagar: number;
+  detalhamentoPorFornecedor: {
+    fornecedorId: string;
+    totalPago: number;
+    totalPendente: number;
+  }[];
 }
 
-export interface AtualizarRelatoriosInput {
-  // TODO: campos de atualização
+export interface RelatorioVendasPeriodo {
+  totalVendas: number;
+  quantidadeVendas: number;
+  vendasPorFormaPagamento: Record<string, number>;
+}
+
+export interface RelatorioMovimentacaoConsolidada {
+  lojaId?: string;
+  totalVendas: number;
+  totalRecebimentos: number;
+  totalCompras: number;
+  totalContasPagas: number;
+  saldoConsolidado: number;
+}
+
+export interface RelatorioGeralConsolidado {
+  periodoInicio?: Date;
+  periodoFim?: Date;
+  lojaId?: string;
+  contasReceber: RelatorioContasReceberGeral;
+  contasPagar: RelatorioContasPagarGeral;
+  vendas: RelatorioVendasPeriodo;
+  movimentacaoConsolidada: RelatorioMovimentacaoConsolidada;
+}
+
+export interface FiltroRelatorioGeral {
+  lojaId?: string;
+  dataInicio?: Date;
+  dataFim?: Date;
 }

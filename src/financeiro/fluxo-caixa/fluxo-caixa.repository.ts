@@ -3,6 +3,7 @@ import { PdvRepository } from "../../vendas/pdv/pdv.repository";
 import { RecebimentosRepository } from "../../caixa/recebimentos/recebimentos.repository";
 import { SangriaRepository } from "../../caixa/sangria/sangria.repository";
 import { ContasPagarRepository } from "../contas-pagar/contas-pagar.repository";
+import { AberturaRepository } from "../../caixa/abertura/abertura.repository";
 import type { LancamentoFluxoCaixa, RelatorioFluxoCaixa, FiltroFluxoCaixa } from "./fluxo-caixa.types";
 import { enfileirarParaSincronizacao } from "../../shared/database/sync";
 
@@ -13,7 +14,8 @@ export class FluxoCaixaRepository {
     private readonly pdvRepo: PdvRepository = new PdvRepository(),
     private readonly recebimentosRepo: RecebimentosRepository = new RecebimentosRepository(),
     private readonly sangriaRepo: SangriaRepository = new SangriaRepository(),
-    private readonly contasPagarRepo: ContasPagarRepository = new ContasPagarRepository()
+    private readonly contasPagarRepo: ContasPagarRepository = new ContasPagarRepository(),
+    private readonly aberturaRepo: AberturaRepository = new AberturaRepository()
   ) {}
 
   async gerarRelatorio(filtro: FiltroFluxoCaixa): Promise<RelatorioFluxoCaixa> {
@@ -39,6 +41,9 @@ export class FluxoCaixaRepository {
     // 2. Recebimentos de cliente
     const recebimentos = await this.recebimentosRepo.listar();
     for (const r of recebimentos) {
+      const caixa = await this.aberturaRepo.buscarPorId(r.caixaId);
+      const lojaId = caixa ? caixa.lojaId : "loja_local";
+
       lancamentos.push({
         id: `f_rec_${r.id}`,
         tipo: "entrada",
@@ -46,7 +51,7 @@ export class FluxoCaixaRepository {
         descricao: `Recebimento de ${r.nomeCliente}`,
         valor: r.valorRecebido,
         vendedorId: r.vendedorId,
-        lojaId: "loja_local",
+        lojaId,
         data: new Date(r.criadoEm),
       });
     }
@@ -54,6 +59,9 @@ export class FluxoCaixaRepository {
     // 3. Sangrias
     const sangrias = await this.sangriaRepo.listar();
     for (const s of sangrias) {
+      const caixa = await this.aberturaRepo.buscarPorId(s.caixaId);
+      const lojaId = caixa ? caixa.lojaId : "loja_local";
+
       lancamentos.push({
         id: `f_sng_${s.id}`,
         tipo: "saida",
@@ -61,7 +69,7 @@ export class FluxoCaixaRepository {
         descricao: s.observacao || "Retirada de caixa",
         valor: s.valor,
         vendedorId: s.usuarioId,
-        lojaId: "loja_local",
+        lojaId,
         data: new Date(s.criadoEm),
       });
     }

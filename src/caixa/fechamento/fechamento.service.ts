@@ -174,4 +174,67 @@ export class FechamentoService {
 
     return relatorio;
   }
+
+  async gerarPdfFechamento(id: string): Promise<string> {
+    const rel = await this.buscarPorId(id);
+
+    const prodsStr = rel.produtosVendidos
+      .map((p) => `  - ${p.nomeProduto}: Qtd ${p.quantidadeTotal} | R$ ${p.valorTotal.toFixed(2)}`)
+      .join("\n");
+
+    const recsStr = rel.recebimentosDetalhado
+      .map((r) => `  - ${r.nomeCliente}: R$ ${r.valorRecebido.toFixed(2)} (${r.formaPagamento})`)
+      .join("\n");
+
+    const prazoStr = rel.vendasAPrazoDetalhado
+      .map((v) => `  - ${v.nomeCliente}: R$ ${v.valor.toFixed(2)}`)
+      .join("\n");
+
+    return `
+=====================================================
+            RELATÓRIO DE FECHAMENTO DE CAIXA
+=====================================================
+Caixa ID: ${rel.caixaId}
+Usuário: ${rel.usuarioId} | Loja: ${rel.lojaId}
+Abertura: ${rel.abertoEm}
+Fechamento: ${rel.fechadoEm}
+
+-----------------------------------------------------
+1. TOTAIS VENDIDOS POR FORMA DE PAGAMENTO
+-----------------------------------------------------
+Dinheiro: R$ ${rel.totalVendidoDinheiro.toFixed(2)}
+Débito:   R$ ${rel.totalVendidoDebito.toFixed(2)}
+Crédito:  R$ ${rel.totalVendidoCredito.toFixed(2)}
+Pix:      R$ ${rel.totalVendidoPix.toFixed(2)}
+A Prazo:  R$ ${rel.totalVendidoAPrazo.toFixed(2)}
+TOTAL GERAL VENDAS: R$ ${rel.totalGeralVendas.toFixed(2)}
+
+Vendas A Prazo Detalhado:
+${prazoStr || "  (Nenhuma venda a prazo)"}
+
+-----------------------------------------------------
+2. DETALHAMENTO DE RECEBIMENTOS DE CLIENTES
+-----------------------------------------------------
+Total Recebido: R$ ${rel.totalGeralRecebido.toFixed(2)}
+${recsStr || "  (Nenhum recebimento registrado)"}
+
+-----------------------------------------------------
+3. CONFERÊNCIA DE CAIXA (DINHEIRO)
+-----------------------------------------------------
+Fundo Inicial:         + R$ ${rel.valorInicial.toFixed(2)}
+Vendido em Dinheiro:   + R$ ${rel.totalVendidoDinheiro.toFixed(2)}
+Recebido em Dinheiro:  + R$ ${rel.totalRecebidoDinheiro.toFixed(2)}
+Retiradas (Sangrias):  - R$ ${rel.totalSangrias.toFixed(2)}
+-----------------------------------------------------
+Dinheiro Esperado:       R$ ${rel.dinheiroEsperado.toFixed(2)}
+Dinheiro Contado:        R$ ${rel.dinheiroContado.toFixed(2)}
+DIFERENÇA DINHEIRO:      R$ ${rel.diferencaDinheiro.toFixed(2)} (${rel.diferencaDinheiro === 0 ? "OK - ZERO DIFERENÇA" : "DIVERGENTE"})
+
+-----------------------------------------------------
+4. RELAÇÃO DE PRODUTOS VENDIDOS
+-----------------------------------------------------
+${prodsStr || "  (Nenhum produto vendido)"}
+=====================================================
+`.trim();
+  }
 }

@@ -10,4 +10,5 @@ fechamentoRouter.use(requireRole("vendedor", "supervisor", "gerente", "administr
 
 fechamentoRouter.get("/", fechamentoController.listar);
 fechamentoRouter.get("/:id", fechamentoController.buscarPorId);
+fechamentoRouter.get("/:id/pdf", fechamentoController.exportarPdf);
 fechamentoRouter.post("/", fechamentoController.fecharCaixa);

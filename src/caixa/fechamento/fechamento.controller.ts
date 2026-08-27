@@ -33,4 +33,14 @@ export const fechamentoController = {
       next(err);
     }
   },
+
+  async exportarPdf(req: Request, res: Response, next: NextFunction) {
+    try {
+      const relatorioPdf = await service.gerarPdfFechamento(req.params.id);
+      res.setHeader("Content-Type", "text/plain");
+      res.send(relatorioPdf);
+    } catch (err) {
+      next(err);
+    }
+  },
 };
