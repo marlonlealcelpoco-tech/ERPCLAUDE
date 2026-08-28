@@ -1,4 +1,3 @@
-// Controller HTTP do módulo tributacao
 import type { Request, Response, NextFunction } from "express";
 import { TributacaoService } from "./tributacao.service";
 import { criarTributacaoSchema, atualizarTributacaoSchema } from "./tributacao.schema";

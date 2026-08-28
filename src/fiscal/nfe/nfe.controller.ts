@@ -1,7 +1,6 @@
-// Controller HTTP do módulo nfe
 import type { Request, Response, NextFunction } from "express";
 import { NfeService } from "./nfe.service";
-import { criarNfeSchema, atualizarNfeSchema } from "./nfe.schema";
+import { emitirNfeSchema } from "./nfe.schema";
 
 const service = new NfeService();
 
@@ -24,21 +23,11 @@ export const nfeController = {
     }
   },
 
-  async criar(req: Request, res: Response, next: NextFunction) {
+  async emitirNfe(req: Request, res: Response, next: NextFunction) {
     try {
-      const dados = criarNfeSchema.parse(req.body);
-      const item = await service.criar(dados);
+      const dados = emitirNfeSchema.parse(req.body);
+      const item = await service.emitirNfe(dados);
       res.status(201).json(item);
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async atualizar(req: Request, res: Response, next: NextFunction) {
-    try {
-      const dados = atualizarNfeSchema.parse(req.body);
-      const item = await service.atualizar(req.params.id, dados);
-      res.json(item);
     } catch (err) {
       next(err);
     }

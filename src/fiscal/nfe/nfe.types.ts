@@ -1,16 +1,19 @@
-// Tipos do módulo nfe
-// TODO: substituir por tipos reais conforme desenho-erp.md
-
-export interface Nfe {
+export interface NotaFiscalEletronica {
   id: string;
+  chaveAcesso: string;
+  numeroNota: number;
+  serie: number;
+  destinatarioCnpjCpf: string;
+  nomeDestinatario: string;
+  valorTotal: number;
+  status: "emissao_pendente" | "emitida" | "cancelada";
+  ambiente: "homologacao" | "producao";
   criadoEm: Date;
-  atualizadoEm: Date;
 }
 
-export interface CriarNfeInput {
-  // TODO: campos de criação
-}
-
-export interface AtualizarNfeInput {
-  // TODO: campos de atualização
+export interface EmitirNfeInput {
+  destinatarioCnpjCpf: string;
+  nomeDestinatario: string;
+  valorTotal: number;
+  ambiente?: "homologacao" | "producao";
 }

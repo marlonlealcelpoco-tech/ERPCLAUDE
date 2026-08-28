@@ -1,32 +1,28 @@
-// Acesso a dados do módulo nfe
-// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
-// então este repositório sempre lê/escreve no banco local, e a sincronização com o
-// banco central acontece de forma assíncrona (ver shared/database/sync).
 import { getLocalDb } from "../../shared/database/connection";
-import type { Nfe, CriarNfeInput, AtualizarNfeInput } from "./nfe.types";
+import type { NotaFiscalEletronica } from "./nfe.types";
+import { enfileirarParaSincronizacao } from "../../shared/database/sync";
+
+const TABLE_NAME = "nfe_emitidas";
 
 export class NfeRepository {
-  async listar(): Promise<Nfe[]> {
+  async listar(): Promise<NotaFiscalEletronica[]> {
     const db = getLocalDb();
-    // TODO: query real
-    return [];
+    return db.find<NotaFiscalEletronica>(TABLE_NAME);
   }
 
-  async buscarPorId(id: string): Promise<Nfe | null> {
+  async buscarPorId(id: string): Promise<NotaFiscalEletronica | null> {
     const db = getLocalDb();
-    // TODO: query real
-    return null;
+    return db.findById<NotaFiscalEletronica>(TABLE_NAME, id);
   }
 
-  async criar(dados: CriarNfeInput): Promise<Nfe> {
+  async salvar(nfe: NotaFiscalEletronica): Promise<NotaFiscalEletronica> {
     const db = getLocalDb();
-    // TODO: insert real + marcar para sincronização
-    throw new Error("Não implementado");
-  }
-
-  async atualizar(id: string, dados: AtualizarNfeInput): Promise<Nfe> {
-    const db = getLocalDb();
-    // TODO: update real + marcar para sincronização
-    throw new Error("Não implementado");
+    db.insert<NotaFiscalEletronica>(TABLE_NAME, nfe);
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "insert",
+      payload: nfe,
+    });
+    return nfe;
   }
 }

@@ -1,29 +1,31 @@
-// Regras de negócio do módulo tributacao
 import { TributacaoRepository } from "./tributacao.repository";
 import type { CriarTributacaoDto, AtualizarTributacaoDto } from "./tributacao.schema";
-import type { Tributacao } from "./tributacao.types";
+import type { RegraTributaria } from "./tributacao.types";
 import { NotFoundError } from "../../shared/errors/app-error";
 
 export class TributacaoService {
   constructor(private readonly repo: TributacaoRepository = new TributacaoRepository()) {}
 
-  async listar(): Promise<Tributacao[]> {
+  async listar(): Promise<RegraTributaria[]> {
     return this.repo.listar();
   }
 
-  async buscarPorId(id: string): Promise<Tributacao> {
+  async buscarPorId(id: string): Promise<RegraTributaria> {
     const item = await this.repo.buscarPorId(id);
-    if (!item) throw new NotFoundError("Tributacao não encontrado");
+    if (!item) throw new NotFoundError("Regra tributária não encontrada");
     return item;
   }
 
-  async criar(dados: CriarTributacaoDto): Promise<Tributacao> {
-    // TODO: regras de negócio específicas de tributacao
-    return this.repo.criar(dados as any);
+  async buscarPorNcm(ncm: string): Promise<RegraTributaria | null> {
+    return this.repo.buscarPorNcm(ncm);
   }
 
-  async atualizar(id: string, dados: AtualizarTributacaoDto): Promise<Tributacao> {
+  async criar(dados: CriarTributacaoDto): Promise<RegraTributaria> {
+    return this.repo.criar(dados);
+  }
+
+  async atualizar(id: string, dados: AtualizarTributacaoDto): Promise<RegraTributaria> {
     await this.buscarPorId(id);
-    return this.repo.atualizar(id, dados as any);
+    return this.repo.atualizar(id, dados);
   }
 }
