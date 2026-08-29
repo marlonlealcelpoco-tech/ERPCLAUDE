@@ -1,0 +1,147 @@
+import React, { useState } from 'react';
+import { AppLayout } from './components/layout/AppLayout';
+import { UsuarioLogado, PerfilUsuario } from './types/auth';
+
+// Import de Páginas Modulares
+import { VendaPDV } from './pages/pdv/VendaPDV';
+import { AbrirFecharCaixa } from './pages/pdv/AbrirFecharCaixa';
+import { ReceberDebitoModal } from './pages/pdv/ReceberDebitoModal';
+import { ClientesPage } from './pages/cadastros/ClientesPage';
+import { ProdutosPage } from './pages/cadastros/ProdutosPage';
+import { EstoquePage } from './pages/estoque/EstoquePage';
+import { FinanceiroPage } from './pages/financeiro/FinanceiroPage';
+import { ComprasPage } from './pages/compras/ComprasPage';
+import { RelatoriosPage } from './pages/relatorios/RelatoriosPage';
+
+const LOJAS_MOCK = [
+  { id: 'loja_1', nome: 'Filial A - Matriz Centro' },
+  { id: 'loja_2', nome: 'Filial B - Shopping Zona Sul' }
+];
+
+export default function App() {
+  const [usuario, setUsuario] = useState<UsuarioLogado>({
+    id: 'usr_1',
+    nome: 'Marlon Silva',
+    email: 'marlon@lasistema.com',
+    perfil: 'administrador',
+    lojaId: 'loja_1',
+    lojaNome: 'Filial A - Matriz Centro'
+  });
+
+  const [activeTab, setActiveTab] = useState('pdv-frente');
+
+  const handleSelectLoja = (lojaId: string) => {
+    const loja = LOJAS_MOCK.find(l => l.id === lojaId);
+    if (loja) {
+      setUsuario(prev => ({
+        ...prev,
+        lojaId: loja.id,
+        lojaNome: loja.nome
+      }));
+    }
+  };
+
+  const handleLogout = () => {
+    alert('Sessão encerrada.');
+  };
+
+  // Switch de Renderização de Conteúdo Modular
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return (
+          <div className="space-y-6">
+            <div className="bg-[#0a1e42] text-white p-6 rounded-xl shadow-lg border-2 border-[#dfb24c] flex flex-col md:flex-row justify-between items-start md:items-center">
+              <div>
+                <h2 className="text-2xl font-black text-[#dfb24c]">BEM-VINDO AO LA SISTEMA ERP</h2>
+                <p className="text-xs text-slate-300 mt-1">Sistema ERP Completo com PDV, Estoque, Financeiro e Multi-loja</p>
+              </div>
+              <div className="mt-4 md:mt-0 flex items-center space-x-2 bg-[#001738] px-3 py-1.5 rounded-lg border border-slate-700">
+                <span className="text-xs font-semibold text-slate-400">Perfil Ativo:</span>
+                <select
+                  value={usuario.perfil}
+                  onChange={e => setUsuario({...usuario, perfil: e.target.value as PerfilUsuario})}
+                  className="bg-transparent text-xs font-bold text-[#dfb24c] focus:outline-none cursor-pointer"
+                >
+                  <option value="administrador" className="bg-slate-900 text-white">Administrador (Acesso Total)</option>
+                  <option value="gerente" className="bg-slate-900 text-white">Gerente</option>
+                  <option value="vendedor" className="bg-slate-900 text-white">Vendedor / Caixa</option>
+                  <option value="estoquista" className="bg-slate-900 text-white">Estoquista</option>
+                  <option value="financeiro" className="bg-slate-900 text-white">Financeiro</option>
+                  <option value="supervisor" className="bg-slate-900 text-white">Supervisor</option>
+                </select>
+              </div>
+            </div>
+            <VendaPDV />
+          </div>
+        );
+
+      // Módulo Vendas & PDV
+      case 'pdv-frente':
+        return <VendaPDV />;
+      case 'pdv-caixa':
+        return <AbrirFecharCaixa />;
+      case 'pdv-recebimento':
+        return <ReceberDebitoModal />;
+
+      // Módulo Cadastros
+      case 'cad-clientes':
+        return <ClientesPage />;
+      case 'cad-produtos':
+        return <ProdutosPage />;
+      case 'cad-fornecedores':
+        return <div className="p-6 bg-white rounded-xl shadow border border-slate-200"><h3 className="font-bold">Cadastro de Fornecedores</h3></div>;
+      case 'cad-vendedores':
+      case 'cad-usuarios':
+      case 'cad-lojas':
+        return <ClientesPage />;
+
+      // Módulo Estoque
+      case 'est-consulta':
+      case 'est-avarias':
+      case 'est-inventario':
+        return <EstoquePage />;
+
+      // Módulo Compras
+      case 'comp-nova':
+      case 'comp-notas':
+        return <ComprasPage />;
+
+      // Módulo Financeiro
+      case 'fin-pagar':
+      case 'fin-receber':
+      case 'fin-fluxo':
+      case 'fin-dre':
+        return <FinanceiroPage />;
+
+      // Módulo Relatórios
+      case 'relatorios':
+        return <RelatoriosPage />;
+
+      // Módulo Fiscal
+      case 'fiscal':
+        return (
+          <div className="bg-white p-6 rounded-xl border border-slate-200 space-y-3">
+            <h3 className="font-bold text-slate-900 text-base">Módulo Fiscal (NFC-e / NF-e)</h3>
+            <p className="text-xs text-slate-500">Estrutura fiscal pronta desde a arquitetura backend (regras tributárias, chave de 44 dígitos e QR-Code DANFE).</p>
+          </div>
+        );
+
+      default:
+        return <VendaPDV />;
+    }
+  };
+
+  return (
+    <AppLayout
+      usuario={usuario}
+      lojas={LOJAS_MOCK}
+      activeTab={activeTab}
+      onSelectTab={setActiveTab}
+      onSelectLoja={handleSelectLoja}
+      onLogout={handleLogout}
+    >
+      {renderContent()}
+    </AppLayout>
+  );
+}
