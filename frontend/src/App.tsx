@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppLayout } from './components/layout/AppLayout';
-import { UsuarioLogado, PerfilUsuario } from './types/auth';
+import { UsuarioLogado, UserProfile, PerfilUsuario } from './types/auth';
+import { LoginPage } from './pages/auth/LoginPage';
+import { authService } from './services/authService';
+import { getAuthToken } from './services/api';
 
 // Import de Páginas Modulares
 import { VendaPDV } from './pages/pdv/VendaPDV';
@@ -19,6 +22,7 @@ const LOJAS_MOCK = [
 ];
 
 export default function App() {
+  const [autenticado, setAutenticado] = useState<boolean>(() => !!getAuthToken());
   const [usuario, setUsuario] = useState<UsuarioLogado>({
     id: 'usr_1',
     nome: 'Marlon Silva',
@@ -29,6 +33,30 @@ export default function App() {
   });
 
   const [activeTab, setActiveTab] = useState('pdv-frente');
+
+  const handleLoginSuccess = (userAuth: {
+    id: string;
+    nome: string;
+    username: string;
+    perfil: UserProfile;
+    lojaId: string;
+  }) => {
+    const perfLower = userAuth.perfil.toLowerCase() as PerfilUsuario;
+    setUsuario({
+      id: userAuth.id,
+      nome: userAuth.nome,
+      email: `${userAuth.username}@lasistema.com`,
+      perfil: perfLower,
+      lojaId: userAuth.lojaId,
+      lojaNome: 'Filial A - Matriz Centro'
+    });
+    setAutenticado(true);
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+    setAutenticado(false);
+  };
 
   const handleSelectLoja = (lojaId: string) => {
     const loja = LOJAS_MOCK.find(l => l.id === lojaId);
@@ -41,9 +69,9 @@ export default function App() {
     }
   };
 
-  const handleLogout = () => {
-    alert('Sessão encerrada.');
-  };
+  if (!autenticado) {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
 
   // Switch de Renderização de Conteúdo Modular
   const renderContent = () => {
