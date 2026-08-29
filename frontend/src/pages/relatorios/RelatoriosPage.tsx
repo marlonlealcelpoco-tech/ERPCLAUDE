@@ -1,9 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart3, Calendar, Filter, FileText, Download, Store } from 'lucide-react';
+import { relatoriosService } from '../../services/relatoriosService';
 
 export const RelatoriosPage: React.FC = () => {
   const [periodo, setPeriodo] = useState<'dia' | 'mes' | 'ano'>('mes');
   const [lojaFiltro, setLojaFiltro] = useState('todas');
+  const [dadosRelatorio, setDadosRelatorio] = useState<any | null>(null);
+
+  useEffect(() => {
+    relatoriosService.obterResumoPeriodo('2025-01-01', '2025-01-31', lojaFiltro !== 'todas' ? lojaFiltro : undefined)
+      .then(data => setDadosRelatorio(data))
+      .catch(() => {});
+  }, [periodo, lojaFiltro]);
 
   return (
     <div className="space-y-6">

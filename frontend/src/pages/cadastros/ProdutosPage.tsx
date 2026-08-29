@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Package, Plus, Search, Edit2, Trash2, Barcode } from 'lucide-react';
+import { produtosService } from '../../services/produtosService';
 
-interface Produto {
+interface ProdutoUI {
   id: string;
   codigoBarras: string;
   descricao: string;
@@ -12,43 +13,84 @@ interface Produto {
   estoqueMinimo: number;
 }
 
-const PRODUTOS_INICIAIS: Produto[] = [
+const PRODUTOS_INICIAIS: ProdutoUI[] = [
   { id: '1', codigoBarras: '7891234567890', descricao: 'Bicicleta Mountain Bike ARO 29', ncm: '87120010', precoCusto: 1200.00, precoVenda: 1890.00, estoqueAtual: 8, estoqueMinimo: 3 },
   { id: '2', codigoBarras: '7891234567891', descricao: 'Capacete de Ciclismo M/L Red', ncm: '65061000', precoCusto: 85.00, precoVenda: 149.90, estoqueAtual: 15, estoqueMinimo: 5 },
   { id: '3', codigoBarras: '7891234567892', descricao: 'Luva Gel Ciclismo Tam G', ncm: '61169300', precoCusto: 22.00, precoVenda: 45.00, estoqueAtual: 30, estoqueMinimo: 10 },
 ];
 
 export const ProdutosPage: React.FC = () => {
-  const [produtos, setProdutos] = useState<Produto[]>(PRODUTOS_INICIAIS);
+  const [produtos, setProdutos] = useState<ProdutoUI[]>(PRODUTOS_INICIAIS);
   const [busca, setBusca] = useState('');
   const [modalAberto, setModalAberto] = useState(false);
-  const [novoProduto, setNovoProduto] = useState<Partial<Produto>>({
+  const [novoProduto, setNovoProduto] = useState<Partial<ProdutoUI>>({
     codigoBarras: '', descricao: '', ncm: '00000000', precoCusto: 0, precoVenda: 0, estoqueAtual: 0, estoqueMinimo: 5
   });
 
-  const handleSalvarProduto = (e: React.FormEvent) => {
+  useEffect(() => {
+    produtosService.listar().then(prods => {
+      if (prods && prods.length > 0) {
+        setProdutos(prods.map(p => ({
+          id: p.id,
+          codigoBarras: p.codigoBarras,
+          descricao: p.nome,
+          ncm: p.ncm || '00000000',
+          precoCusto: p.precoCusto,
+          precoVenda: p.precoVenda,
+          estoqueAtual: p.estoqueAtual,
+          estoqueMinimo: p.estoqueMinimo
+        })));
+      }
+    }).catch(() => {});
+  }, []);
+
+  const handleSalvarProduto = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!novoProduto.descricao || !novoProduto.codigoBarras) return alert('Descrição e Código de Barras são obrigatórios!');
 
-    // Checagem duplicidade codigo barras
     if (produtos.some(p => p.codigoBarras === novoProduto.codigoBarras)) {
       return alert(`Erro: Já existe um produto cadastrado com o código de barras ${novoProduto.codigoBarras}`);
     }
 
-    const prodCriado: Produto = {
-      id: Date.now().toString(),
-      codigoBarras: novoProduto.codigoBarras,
-      descricao: novoProduto.descricao,
-      ncm: novoProduto.ncm || '00000000',
-      precoCusto: Number(novoProduto.precoCusto) || 0,
-      precoVenda: Number(novoProduto.precoVenda) || 0,
-      estoqueAtual: Number(novoProduto.estoqueAtual) || 0,
-      estoqueMinimo: Number(novoProduto.estoqueMinimo) || 0
-    };
+    try {
+      const created = await produtosService.criar({
+        codigoBarras: novoProduto.codigoBarras,
+        nome: novoProduto.descricao,
+        categoria: 'Geral',
+        precoCusto: Number(novoProduto.precoCusto) || 0,
+        precoVenda: Number(novoProduto.precoVenda) || 0,
+        estoqueAtual: Number(novoProduto.estoqueAtual) || 0,
+        estoqueMinimo: Number(novoProduto.estoqueMinimo) || 5,
+        unidade: 'UN',
+        ncm: novoProduto.ncm || '00000000'
+      }).catch(() => null);
 
-    setProdutos([prodCriado, ...produtos]);
-    setModalAberto(false);
-    setNovoProduto({ codigoBarras: '', descricao: '', ncm: '00000000', precoCusto: 0, precoVenda: 0, estoqueAtual: 0, estoqueMinimo: 5 });
+      const prodCriado: ProdutoUI = created ? {
+        id: created.id,
+        codigoBarras: created.codigoBarras,
+        descricao: created.nome,
+        ncm: created.ncm || '00000000',
+        precoCusto: created.precoCusto,
+        precoVenda: created.precoVenda,
+        estoqueAtual: created.estoqueAtual,
+        estoqueMinimo: created.estoqueMinimo
+      } : {
+        id: Date.now().toString(),
+        codigoBarras: novoProduto.codigoBarras,
+        descricao: novoProduto.descricao,
+        ncm: novoProduto.ncm || '00000000',
+        precoCusto: Number(novoProduto.precoCusto) || 0,
+        precoVenda: Number(novoProduto.precoVenda) || 0,
+        estoqueAtual: Number(novoProduto.estoqueAtual) || 0,
+        estoqueMinimo: Number(novoProduto.estoqueMinimo) || 0
+      };
+
+      setProdutos([prodCriado, ...produtos]);
+      setModalAberto(false);
+      setNovoProduto({ codigoBarras: '', descricao: '', ncm: '00000000', precoCusto: 0, precoVenda: 0, estoqueAtual: 0, estoqueMinimo: 5 });
+    } catch (err: any) {
+      alert(err.message || 'Erro ao cadastrar produto');
+    }
   };
 
   const produtosFiltrados = produtos.filter(p =>
@@ -171,7 +213,7 @@ export const ProdutosPage: React.FC = () => {
                     type="number"
                     value={novoProduto.estoqueAtual}
                     onChange={e => setNovoProduto({...novoProduto, estoqueAtual: Number(e.target.value)})}
-                    className="w-full p-2 border border-slate-300 rounded-lg focus:outline-none"
+                    className="w-full p-2 border border-slate-300 rounded-lg focus:outline-none font-bold"
                   />
                 </div>
               </div>
@@ -193,7 +235,7 @@ export const ProdutosPage: React.FC = () => {
                     step="0.01"
                     value={novoProduto.precoVenda}
                     onChange={e => setNovoProduto({...novoProduto, precoVenda: Number(e.target.value)})}
-                    className="w-full p-2 border border-slate-300 rounded-lg focus:outline-none"
+                    className="w-full p-2 border border-slate-300 rounded-lg focus:outline-none font-bold"
                   />
                 </div>
               </div>

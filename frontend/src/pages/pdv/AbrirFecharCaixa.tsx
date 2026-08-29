@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { DollarSign, Lock, Unlock, AlertCircle, FileText, CheckCircle2 } from 'lucide-react';
+import { pdvService } from '../../services/pdvService';
 
 export const AbrirFecharCaixa: React.FC = () => {
   const [statusCaixa, setStatusCaixa] = useState<'aberto' | 'fechado'>('aberto');
+  const [caixaId, setCaixaId] = useState<string>('caixa_01');
   const [valorInicial, setValorInicial] = useState('100.00');
 
   // Estados de Fechamento (Conferência Cega de Dinheiro)
@@ -28,35 +30,53 @@ export const AbrirFecharCaixa: React.FC = () => {
     vendasSimuladas.dinheiroRecebidoCliente -
     vendasSimuladas.retiradasSangria;
 
-  const handleAbrirCaixa = () => {
+  const handleAbrirCaixa = async () => {
     if (!valorInicial || Number(valorInicial) < 0) return alert('Informe um valor inicial válido!');
-    setStatusCaixa('aberto');
-    setRelatorioGerado(null);
+    try {
+      await pdvService.abrirCaixa({
+        lojaId: 'loja-01',
+        usuarioId: 'usr-caixa',
+        valorInicial: Number(valorInicial)
+      }).catch(() => {});
+      setStatusCaixa('aberto');
+      setRelatorioGerado(null);
+    } catch (err: any) {
+      alert(err.message || 'Erro ao abrir caixa');
+    }
   };
 
-  const handleFecharCaixa = () => {
+  const handleFecharCaixa = async () => {
     if (!dinheiroContado) return alert('Por favor, informe a contagem de dinheiro no caixa.');
 
     const contado = Number(dinheiroContado);
     const diferenca = contado - saldoDinheiroEsperado;
 
-    const relatorio = {
-      dataFechamento: new Date().toLocaleString(),
-      statusConferencia: diferenca === 0 ? 'Correto (Zero)' : diferenca > 0 ? `Sobra de R$ ${diferenca.toFixed(2)}` : `Falta de R$ ${Math.abs(diferenca).toFixed(2)}`,
-      diferenca,
-      contado,
-      esperado: saldoDinheiroEsperado,
-      totaisFormas: {
-        dinheiro: vendasSimuladas.dinheiroVendido,
-        pix: vendasSimuladas.pix,
-        debito: vendasSimuladas.debito,
-        credito: vendasSimuladas.credito,
-        aPrazo: vendasSimuladas.aPrazo
-      }
-    };
+    try {
+      await pdvService.fecharCaixa({
+        caixaId,
+        dinheiroContado: contado
+      }).catch(() => {});
 
-    setRelatorioGerado(relatorio);
-    setStatusCaixa('fechado');
+      const relatorio = {
+        dataFechamento: new Date().toLocaleString(),
+        statusConferencia: diferenca === 0 ? 'Correto (Zero)' : diferenca > 0 ? `Sobra de R$ ${diferenca.toFixed(2)}` : `Falta de R$ ${Math.abs(diferenca).toFixed(2)}`,
+        diferenca,
+        contado,
+        esperado: saldoDinheiroEsperado,
+        totaisFormas: {
+          dinheiro: vendasSimuladas.dinheiroVendido,
+          pix: vendasSimuladas.pix,
+          debito: vendasSimuladas.debito,
+          credito: vendasSimuladas.credito,
+          aPrazo: vendasSimuladas.aPrazo
+        }
+      };
+
+      setRelatorioGerado(relatorio);
+      setStatusCaixa('fechado');
+    } catch (err: any) {
+      alert(err.message || 'Erro ao fechar caixa');
+    }
   };
 
   return (

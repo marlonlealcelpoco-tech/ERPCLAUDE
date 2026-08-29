@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Package, AlertTriangle, ClipboardList, ArrowUpRight, ArrowDownLeft, CheckCircle2 } from 'lucide-react';
+import { estoqueService } from '../../services/estoqueService';
+import { produtosService, Produto } from '../../services/produtosService';
 
 interface MovimentacaoEstoque {
   id: string;
@@ -20,6 +22,7 @@ const MOVIMENTACOES_MOCK: MovimentacaoEstoque[] = [
 export const EstoquePage: React.FC = () => {
   const [abaEstoque, setAbaEstoque] = useState<'movimentacao' | 'avarias' | 'inventario'>('movimentacao');
   const [movimentacoes, setMovimentacoes] = useState<MovimentacaoEstoque[]>(MOVIMENTACOES_MOCK);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
   const [sucesso, setSucesso] = useState<string | null>(null);
 
   // Form states de avaria
@@ -27,23 +30,44 @@ export const EstoquePage: React.FC = () => {
   const [qtdAvaria, setQtdAvaria] = useState('1');
   const [motivoAvaria, setMotivoAvaria] = useState('Danificado no transporte');
 
-  const handleLancarAvaria = (e: React.FormEvent) => {
+  useEffect(() => {
+    produtosService.listar().then(prods => {
+      if (prods && prods.length > 0) setProdutos(prods);
+    }).catch(() => {});
+  }, []);
+
+  const handleLancarAvaria = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!produtoAvaria) return alert('Selecione um produto.');
 
-    const nova: MovimentacaoEstoque = {
-      id: Date.now().toString(),
-      produtoNome: produtoAvaria,
-      tipo: 'avaria',
-      quantidade: Number(qtdAvaria),
-      motivo: motivoAvaria,
-      data: new Date().toLocaleString(),
-      usuario: 'Estoquista Logado'
-    };
+    try {
+      await estoqueService.registrarBaixaAvaria({
+        produtoId: produtoAvaria,
+        lojaId: 'loja-01',
+        quantidade: Number(qtdAvaria),
+        tipo: 'avaria',
+        motivo: motivoAvaria
+      }).catch(() => {});
 
-    setMovimentacoes([nova, ...movimentacoes]);
-    setSucesso(`Baixa por avaria realizada com sucesso para: ${produtoAvaria}`);
-    setTimeout(() => setSucesso(null), 4000);
+      const prodObj = produtos.find(p => p.id === produtoAvaria);
+      const prodNome = prodObj ? prodObj.nome : produtoAvaria;
+
+      const nova: MovimentacaoEstoque = {
+        id: Date.now().toString(),
+        produtoNome: prodNome,
+        tipo: 'avaria',
+        quantidade: Number(qtdAvaria),
+        motivo: motivoAvaria,
+        data: new Date().toLocaleString(),
+        usuario: 'Estoquista Logado'
+      };
+
+      setMovimentacoes([nova, ...movimentacoes]);
+      setSucesso(`Baixa por avaria realizada com sucesso para: ${prodNome}`);
+      setTimeout(() => setSucesso(null), 4000);
+    } catch (err: any) {
+      alert(err.message || 'Erro ao lancar avaria');
+    }
   };
 
   return (
@@ -157,9 +181,17 @@ export const EstoquePage: React.FC = () => {
                 className="w-full p-2.5 border border-slate-300 rounded-lg focus:outline-none text-xs font-semibold"
               >
                 <option value="">Selecione...</option>
-                <option value="Bicicleta Mountain Bike ARO 29">Bicicleta Mountain Bike ARO 29</option>
-                <option value="Capacete de Ciclismo M/L Red">Capacete de Ciclismo M/L Red</option>
-                <option value="Luva Gel Ciclismo Tam G">Luva Gel Ciclismo Tam G</option>
+                {produtos.length > 0 ? (
+                  produtos.map(p => (
+                    <option key={p.id} value={p.id}>{p.nome} (Cod: {p.codigoBarras})</option>
+                  ))
+                ) : (
+                  <>
+                    <option value="Bicicleta Mountain Bike ARO 29">Bicicleta Mountain Bike ARO 29</option>
+                    <option value="Capacete de Ciclismo M/L Red">Capacete de Ciclismo M/L Red</option>
+                    <option value="Luva Gel Ciclismo Tam G">Luva Gel Ciclismo Tam G</option>
+                  </>
+                )}
               </select>
             </div>
 

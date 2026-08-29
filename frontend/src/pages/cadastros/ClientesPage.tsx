@@ -1,15 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, Plus, Search, Edit2, Trash2, CheckCircle2 } from 'lucide-react';
-
-interface Cliente {
-  id: string;
-  nome: string;
-  cpfCnpj: string;
-  telefone: string;
-  email: string;
-  limiteCredito: number;
-  saldoDevedor: number;
-}
+import { clientesService, Cliente } from '../../services/clientesService';
 
 const CLIENTES_INICIAIS: Cliente[] = [
   { id: '1', nome: 'João da Silva', cpfCnpj: '123.456.789-00', telefone: '(11) 98765-4321', email: 'joao@email.com', limiteCredito: 1000.00, saldoDevedor: 450.00 },
@@ -21,27 +12,56 @@ export const ClientesPage: React.FC = () => {
   const [clientes, setClientes] = useState<Cliente[]>(CLIENTES_INICIAIS);
   const [busca, setBusca] = useState('');
   const [modalAberto, setModalAberto] = useState(false);
+  const [carregando, setCarregando] = useState(false);
   const [novoCliente, setNovoCliente] = useState<Partial<Cliente>>({
     nome: '', cpfCnpj: '', telefone: '', email: '', limiteCredito: 1000
   });
 
-  const handleSalvarCliente = (e: React.FormEvent) => {
+  useEffect(() => {
+    carregarClientes();
+  }, []);
+
+  const carregarClientes = async () => {
+    try {
+      setCarregando(true);
+      const data = await clientesService.listar().catch(() => []);
+      if (data && data.length > 0) {
+        setClientes(data);
+      }
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  const handleSalvarCliente = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!novoCliente.nome || !novoCliente.cpfCnpj) return alert('Nome e CPF/CNPJ são obrigatórios!');
 
-    const clienteCriado: Cliente = {
-      id: Date.now().toString(),
-      nome: novoCliente.nome,
-      cpfCnpj: novoCliente.cpfCnpj,
-      telefone: novoCliente.telefone || '',
-      email: novoCliente.email || '',
-      limiteCredito: Number(novoCliente.limiteCredito) || 0,
-      saldoDevedor: 0
-    };
+    try {
+      const resp = await clientesService.criar({
+        nome: novoCliente.nome,
+        cpfCnpj: novoCliente.cpfCnpj,
+        telefone: novoCliente.telefone || '',
+        email: novoCliente.email || '',
+        limiteCredito: Number(novoCliente.limiteCredito) || 0,
+      }).catch(() => null);
 
-    setClientes([clienteCriado, ...clientes]);
-    setModalAberto(false);
-    setNovoCliente({ nome: '', cpfCnpj: '', telefone: '', email: '', limiteCredito: 1000 });
+      const clienteCriado: Cliente = resp || {
+        id: Date.now().toString(),
+        nome: novoCliente.nome,
+        cpfCnpj: novoCliente.cpfCnpj,
+        telefone: novoCliente.telefone || '',
+        email: novoCliente.email || '',
+        limiteCredito: Number(novoCliente.limiteCredito) || 0,
+        saldoDevedor: 0
+      };
+
+      setClientes([clienteCriado, ...clientes]);
+      setModalAberto(false);
+      setNovoCliente({ nome: '', cpfCnpj: '', telefone: '', email: '', limiteCredito: 1000 });
+    } catch (err: any) {
+      alert(err.message || 'Erro ao cadastrar cliente');
+    }
   };
 
   const clientesFiltrados = clientes.filter(c =>

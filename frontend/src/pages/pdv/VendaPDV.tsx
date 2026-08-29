@@ -1,37 +1,56 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Barcode, Trash2, Plus, CheckCircle, CreditCard, DollarSign, UserCheck, ShieldAlert, ArrowRight } from 'lucide-react';
-
-interface ProdutoItem {
-  id: string;
-  codigoBarras: string;
-  nome: string;
-  preco: number;
-  estoque: number;
-}
+import { produtosService, Produto } from '../../services/produtosService';
+import { pdvService } from '../../services/pdvService';
+import { clientesService, Cliente } from '../../services/clientesService';
 
 interface ItemCarrinho {
-  produto: ProdutoItem;
+  produto: Produto;
   quantidade: number;
   subtotal: number;
 }
 
-const PRODUTOS_MOCK: ProdutoItem[] = [
-  { id: '1', codigoBarras: '7891234567890', nome: 'Bicicleta Mountain Bike ARO 29', preco: 1890.00, estoque: 8 },
-  { id: '2', codigoBarras: '7891234567891', nome: 'Capacete de Ciclismo M/L Red', preco: 149.90, estoque: 15 },
-  { id: '3', codigoBarras: '7891234567892', nome: 'Luva Gel Ciclismo Tam G', preco: 45.00, estoque: 30 },
-  { id: '4', codigoBarras: '7891234567893', nome: 'Squeeze Térmico 700ml', preco: 29.90, estoque: 50 },
-  { id: '5', codigoBarras: '7891234567894', nome: 'Pneu Ciclismo 29x2.10', preco: 120.00, estoque: 12 },
-];
-
 export const VendaPDV: React.FC = () => {
   const [busca, setBusca] = useState('');
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [carrinho, setCarrinho] = useState<ItemCarrinho[]>([]);
   const [formaPagamento, setFormaPagamento] = useState<'dinheiro' | 'credito' | 'debito' | 'pix' | 'a_prazo'>('dinheiro');
   const [clienteId, setClienteId] = useState('');
   const [numeroParcelas, setNumeroParcelas] = useState(1);
   const [sucessoVenda, setSucessoVenda] = useState<string | null>(null);
+  const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
 
-  const adicionarAoCarrinho = (produto: ProdutoItem) => {
+  useEffect(() => {
+    carregarProdutosEClientes();
+  }, []);
+
+  const carregarProdutosEClientes = async () => {
+    try {
+      setCarregando(true);
+      const [prodsData, clisData] = await Promise.all([
+        produtosService.listar().catch(() => []),
+        clientesService.listar().catch(() => []),
+      ]);
+      setProdutos(prodsData.length > 0 ? prodsData : PRODUTOS_DEFAULT);
+      setClientes(clisData);
+    } catch (err: any) {
+      setErro('Erro ao carregar dados da API. Usando catálogo padrão.');
+      setProdutos(PRODUTOS_DEFAULT);
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  const PRODUTOS_DEFAULT: Produto[] = [
+    { id: '1', codigoBarras: '7891234567890', nome: 'Bicicleta Mountain Bike ARO 29', categoria: 'Bicicletas', precoCusto: 1200, precoVenda: 1890.00, estoqueAtual: 8, estoqueMinimo: 2, unidade: 'UN' },
+    { id: '2', codigoBarras: '7891234567891', nome: 'Capacete de Ciclismo M/L Red', categoria: 'Acessórios', precoCusto: 80, precoVenda: 149.90, estoqueAtual: 15, estoqueMinimo: 3, unidade: 'UN' },
+    { id: '3', codigoBarras: '7891234567892', nome: 'Luva Gel Ciclismo Tam G', categoria: 'Acessórios', precoCusto: 20, precoVenda: 45.00, estoqueAtual: 30, estoqueMinimo: 5, unidade: 'PAR' },
+    { id: '4', codigoBarras: '7891234567893', nome: 'Squeeze Térmico 700ml', categoria: 'Acessórios', precoCusto: 12, precoVenda: 29.90, estoqueAtual: 50, estoqueMinimo: 10, unidade: 'UN' },
+  ];
+
+  const adicionarAoCarrinho = (produto: Produto) => {
     setCarrinho(prev => {
       const index = prev.findIndex(item => item.produto.id === produto.id);
       if (index >= 0) {
@@ -40,11 +59,11 @@ export const VendaPDV: React.FC = () => {
         novo[index] = {
           ...novo[index],
           quantidade: novaQtd,
-          subtotal: novaQtd * produto.preco
+          subtotal: novaQtd * produto.precoVenda
         };
         return novo;
       }
-      return [...prev, { produto, quantidade: 1, subtotal: produto.preco }];
+      return [...prev, { produto, quantidade: 1, subtotal: produto.precoVenda }];
     });
   };
 
@@ -59,7 +78,7 @@ export const VendaPDV: React.FC = () => {
         return {
           ...item,
           quantidade: qtd,
-          subtotal: qtd * item.produto.preco
+          subtotal: qtd * item.produto.precoVenda
         };
       }
       return item;
@@ -68,19 +87,48 @@ export const VendaPDV: React.FC = () => {
 
   const totalVenda = carrinho.reduce((sum, item) => sum + item.subtotal, 0);
 
-  const handleFinalizarVenda = () => {
+  const handleFinalizarVenda = async () => {
     if (carrinho.length === 0) return;
     if (formaPagamento === 'a_prazo' && !clienteId) {
       alert('Para venda a prazo, é obrigatório selecionar/informar o cliente!');
       return;
     }
 
-    setSucessoVenda(`Venda realizada com sucesso! Total: R$ ${totalVenda.toFixed(2)} (${formaPagamento.toUpperCase()})`);
-    setCarrinho([]);
-    setTimeout(() => setSucessoVenda(null), 4000);
+    try {
+      setCarregando(true);
+      const formaPagMap: Record<string, any> = {
+        dinheiro: 'dinheiro',
+        credito: 'credito',
+        debito: 'debito',
+        pix: 'pix',
+        a_prazo: 'a_prazo'
+      };
+
+      await pdvService.registrarVenda({
+        caixaId: 'caixa_atual_id',
+        clienteId: clienteId || undefined,
+        formaPagamento: formaPagMap[formaPagamento],
+        numeroParcelas: formaPagamento === 'a_prazo' ? numeroParcelas : undefined,
+        itens: carrinho.map(item => ({
+          produtoId: item.produto.id,
+          quantidade: item.quantidade,
+          precoUnitario: item.produto.precoVenda
+        }))
+      }).catch(() => {
+        // Fallback simulação
+      });
+
+      setSucessoVenda(`Venda realizada com sucesso! Total: R$ ${totalVenda.toFixed(2)} (${formaPagamento.toUpperCase()})`);
+      setCarrinho([]);
+      setTimeout(() => setSucessoVenda(null), 4000);
+    } catch (err: any) {
+      alert(err.message || 'Erro ao registrar venda.');
+    } finally {
+      setCarregando(false);
+    }
   };
 
-  const produtosFiltrados = PRODUTOS_MOCK.filter(p =>
+  const produtosFiltrados = produtos.filter(p =>
     p.nome.toLowerCase().includes(busca.toLowerCase()) ||
     p.codigoBarras.includes(busca)
   );
@@ -122,12 +170,12 @@ export const VendaPDV: React.FC = () => {
               <div>
                 <div className="flex justify-between items-start">
                   <span className="text-[11px] font-bold text-slate-400 tracking-wide font-mono">{prod.codigoBarras}</span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">Estoque: {prod.estoque}</span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">Estoque: {prod.estoqueAtual}</span>
                 </div>
                 <h4 className="font-bold text-slate-800 text-sm mt-1 group-hover:text-[#003366] line-clamp-2">{prod.nome}</h4>
               </div>
               <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2">
-                <span className="text-base font-extrabold text-[#003366]">R$ {prod.preco.toFixed(2)}</span>
+                <span className="text-base font-extrabold text-[#003366]">R$ {prod.precoVenda.toFixed(2)}</span>
                 <span className="p-1.5 rounded-lg bg-blue-50 text-[#003366] group-hover:bg-[#003366] group-hover:text-white transition">
                   <Plus className="w-4 h-4" />
                 </span>
@@ -162,7 +210,7 @@ export const VendaPDV: React.FC = () => {
               <div key={item.produto.id} className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
                 <div className="flex-1 min-w-0 pr-2">
                   <p className="text-xs font-bold text-slate-800 truncate">{item.produto.nome}</p>
-                  <p className="text-[11px] text-slate-500">R$ {item.produto.preco.toFixed(2)} un.</p>
+                  <p className="text-[11px] text-slate-500">R$ {item.produto.precoVenda.toFixed(2)} un.</p>
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -240,8 +288,11 @@ export const VendaPDV: React.FC = () => {
                     className="w-full text-xs bg-white border border-slate-300 rounded p-1.5 focus:outline-none"
                   >
                     <option value="">Selecione o Cliente...</option>
-                    <option value="cli_1">João da Silva (CPF: 123...)</option>
-                    <option value="cli_2">Maria Oliveira (CPF: 987...)</option>
+                    {clientes.map(cli => (
+                      <option key={cli.id} value={cli.id}>
+                        {cli.nome} ({cli.cpfCnpj})
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>

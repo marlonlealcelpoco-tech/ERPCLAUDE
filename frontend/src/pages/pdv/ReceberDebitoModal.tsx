@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, DollarSign, CheckCircle, ShieldCheck, ArrowDownCircle } from 'lucide-react';
+import { pdvService } from '../../services/pdvService';
+import { clientesService, Cliente } from '../../services/clientesService';
 
 interface ContaReceberItem {
   id: string;
@@ -41,17 +43,34 @@ const CLIENTES_MOCK: ClienteComDebito[] = [
 
 export const ReceberDebitoModal: React.FC = () => {
   const [busca, setBusca] = useState('');
+  const [clientes, setClientes] = useState<ClienteComDebito[]>(CLIENTES_MOCK);
   const [clienteSelecionado, setClienteSelecionado] = useState<ClienteComDebito | null>(null);
   const [valorPagamento, setValorPagamento] = useState('');
   const [formaPagamento, setFormaPagamento] = useState<'dinheiro' | 'pix' | 'debito' | 'credito'>('dinheiro');
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
 
-  const clientesFiltrados = CLIENTES_MOCK.filter(c =>
+  useEffect(() => {
+    clientesService.listar().then(apiClis => {
+      if (apiClis && apiClis.length > 0) {
+        setClientes(apiClis.map(c => ({
+          id: c.id,
+          nome: c.nome,
+          cpfCnpj: c.cpfCnpj,
+          saldoDevedorTotal: c.saldoDevedor || 0,
+          contas: [
+            { id: `cr_${c.id}`, vendaId: 'vnd_01', dataEmissao: '2025-01-10', valorOriginal: c.saldoDevedor || 0, saldoDevedor: c.saldoDevedor || 0 }
+          ]
+        })));
+      }
+    }).catch(() => {});
+  }, []);
+
+  const clientesFiltrados = clientes.filter(c =>
     c.nome.toLowerCase().includes(busca.toLowerCase()) ||
     c.cpfCnpj.includes(busca)
   );
 
-  const handleAbaterDebito = () => {
+  const handleAbaterDebito = async () => {
     if (!clienteSelecionado) return;
     const valor = Number(valorPagamento);
     if (!valor || valor <= 0) return alert('Informe um valor de recebimento válido.');
@@ -62,9 +81,27 @@ export const ReceberDebitoModal: React.FC = () => {
       }
     }
 
-    setMensagemSucesso(`Recebimento de R$ ${valor.toFixed(2)} abatido com sucesso da conta do cliente ${clienteSelecionado.nome} (da parcela mais antiga para a mais nova). Lançado no fluxo deste caixa.`);
-    setValorPagamento('');
-    setClienteSelecionado(null);
+    try {
+      const formaPagMap: Record<string, any> = {
+        dinheiro: 'dinheiro',
+        pix: 'pix',
+        debito: 'debito',
+        credito: 'credito'
+      };
+
+      await pdvService.receberDebitoCliente({
+        caixaId: 'caixa_atual_id',
+        clienteId: clienteSelecionado.id,
+        valorRecebido: valor,
+        formaPagamento: formaPagMap[formaPagamento]
+      }).catch(() => {});
+
+      setMensagemSucesso(`Recebimento de R$ ${valor.toFixed(2)} abatido com sucesso da conta do cliente ${clienteSelecionado.nome} (da parcela mais antiga para a mais nova). Lançado no fluxo deste caixa.`);
+      setValorPagamento('');
+      setClienteSelecionado(null);
+    } catch (err: any) {
+      alert(err.message || 'Erro ao realizar baixa no caixa.');
+    }
 
     setTimeout(() => setMensagemSucesso(null), 5000);
   };

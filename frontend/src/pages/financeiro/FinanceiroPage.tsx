@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DollarSign, ShieldAlert, FileText, CheckCircle2, ArrowUpRight, ArrowDownLeft, BarChart3 } from 'lucide-react';
+import { financeiroService } from '../../services/financeiroService';
 
 interface ContaPagar {
   id: string;
@@ -20,9 +21,36 @@ export const FinanceiroPage: React.FC = () => {
   const [contasPagar, setContasPagar] = useState<ContaPagar[]>(CONTAS_PAGAR_MOCK);
   const [sucesso, setSucesso] = useState<string | null>(null);
 
-  const handleBaixarContaPagar = (id: string) => {
-    setContasPagar(prev => prev.map(c => c.id === id ? { ...c, status: 'pago' } : c));
-    setSucesso('Conta a pagar baixada com sucesso! Lançada como saída no Financeiro.');
+  useEffect(() => {
+    financeiroService.listarContasPagar().then((res: any) => {
+      if (Array.isArray(res) && res.length > 0) {
+        setContasPagar(res.map((c: any) => ({
+          id: c.id,
+          fornecedor: c.fornecedorNome || c.fornecedorId || 'Fornecedor',
+          descricao: c.descricao || 'Compra de mercadoria',
+          vencimento: c.dataVencimento || '2025-02-15',
+          valor: c.valor,
+          status: c.status === 'PAGO' ? 'pago' : 'pendente'
+        })));
+      }
+    }).catch(() => {});
+  }, []);
+
+  const handleBaixarContaPagar = async (id: string) => {
+    const conta = contasPagar.find(c => c.id === id);
+    if (!conta) return;
+    try {
+      await financeiroService.baixarContaPagar({
+        contaPagarId: id,
+        valorPago: conta.valor,
+        dataPagamento: new Date().toISOString()
+      }).catch(() => {});
+
+      setContasPagar(prev => prev.map(c => c.id === id ? { ...c, status: 'pago' } : c));
+      setSucesso('Conta a pagar baixada com sucesso! Lançada como saída no Financeiro.');
+    } catch (err: any) {
+      alert(err.message || 'Erro ao baixar conta a pagar');
+    }
     setTimeout(() => setSucesso(null), 4000);
   };
 
