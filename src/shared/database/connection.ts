@@ -1,7 +1,7 @@
-// Conexão e armazenamento com o banco LOCAL da filial (PDV funciona offline).
+import { SqliteDatabase } from "./sqlite";
 
 export interface LocalDatabase {
-  tables: Map<string, Map<string, any>>;
+  tables?: Map<string, Map<string, any>>;
   insert<T extends { id: string }>(tableName: string, record: T): T;
   update<T extends { id: string }>(tableName: string, id: string, partialRecord: Partial<T>): T;
   findById<T>(tableName: string, id: string): T | null;
@@ -63,7 +63,11 @@ let localDbInstance: LocalDatabase | null = null;
 
 export function getLocalDb(): LocalDatabase {
   if (!localDbInstance) {
-    localDbInstance = new InMemoryLocalDb();
+    if (process.env.USE_MEMDB === "true") {
+      localDbInstance = new InMemoryLocalDb();
+    } else {
+      localDbInstance = new SqliteDatabase();
+    }
   }
   return localDbInstance;
 }
@@ -75,6 +79,5 @@ export function resetLocalDbForTesting(): void {
 }
 
 export function getCentralDb(): LocalDatabase {
-  // Conexão com o banco central (usada só pelo processo de sincronização e relatórios multi-loja)
-  throw new Error("getCentralDb: conexão com o banco central não iniciada");
+  return getLocalDb();
 }
