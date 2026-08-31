@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { DollarSign, Lock, Unlock, AlertCircle, FileText, CheckCircle2 } from 'lucide-react';
+import { DollarSign, Lock, Unlock, AlertCircle, FileText, CheckCircle2, Printer } from 'lucide-react';
 import { pdvService } from '../../services/pdvService';
+import { imprimirCupomEscPos } from '../../utils/impressoraEscPos';
 
 export const AbrirFecharCaixa: React.FC = () => {
   const [statusCaixa, setStatusCaixa] = useState<'aberto' | 'fechado'>('aberto');
@@ -225,11 +226,27 @@ export const AbrirFecharCaixa: React.FC = () => {
               <h3 className="font-black text-slate-900 text-base">Relatório de Fechamento de Caixa Gerado</h3>
             </div>
             <button
-              onClick={() => alert('Download do PDF de fechamento de caixa em andamento...')}
+              onClick={() => {
+                imprimirCupomEscPos({
+                  lojaNome: 'LA SISTEMA ERP - Relatório Fechamento',
+                  cnpjLoja: '12.345.678/0001-99',
+                  data: relatorioGerado.dataFechamento,
+                  vendaId: 'FECHAMENTO_CAIXA',
+                  itens: [
+                    { nome: 'Dinheiro Contado', quantidade: 1, valorUnitario: relatorioGerado.contado, subtotal: relatorioGerado.contado },
+                    { nome: 'Vendas Dinheiro', quantidade: 1, valorUnitario: relatorioGerado.totaisFormas.dinheiro, subtotal: relatorioGerado.totaisFormas.dinheiro },
+                    { nome: 'Vendas Pix', quantidade: 1, valorUnitario: relatorioGerado.totaisFormas.pix, subtotal: relatorioGerado.totaisFormas.pix },
+                    { nome: 'Vendas Débito', quantidade: 1, valorUnitario: relatorioGerado.totaisFormas.debito, subtotal: relatorioGerado.totaisFormas.debito },
+                    { nome: 'Vendas Crédito', quantidade: 1, valorUnitario: relatorioGerado.totaisFormas.credito, subtotal: relatorioGerado.totaisFormas.credito }
+                  ],
+                  total: relatorioGerado.contado,
+                  formaPagamento: relatorioGerado.statusConferencia
+                });
+              }}
               className="px-4 py-1.5 bg-[#003366] text-white text-xs font-bold rounded-lg flex items-center space-x-1 hover:bg-slate-800 transition"
             >
-              <FileText className="w-4 h-4" />
-              <span>Exportar PDF</span>
+              <Printer className="w-4 h-4" />
+              <span>Imprimir Impressora Térmica (ESC/POS)</span>
             </button>
           </div>
 

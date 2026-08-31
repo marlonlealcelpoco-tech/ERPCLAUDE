@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Barcode, Trash2, Plus, CheckCircle, CreditCard, DollarSign, UserCheck, ShieldAlert, ArrowRight } from 'lucide-react';
+import { ShoppingCart, Barcode, Trash2, Plus, CheckCircle, CreditCard, DollarSign, UserCheck, ShieldAlert, ArrowRight, Printer } from 'lucide-react';
+import { imprimirCupomEscPos } from '../../utils/impressoraEscPos';
 import { produtosService, Produto } from '../../services/produtosService';
 import { pdvService } from '../../services/pdvService';
 import { clientesService, Cliente } from '../../services/clientesService';
@@ -119,6 +120,23 @@ export const VendaPDV: React.FC = () => {
       });
 
       setSucessoVenda(`Venda realizada com sucesso! Total: R$ ${totalVenda.toFixed(2)} (${formaPagamento.toUpperCase()})`);
+
+      // Acionar Impressora Térmica ESC/POS automaticamente
+      imprimirCupomEscPos({
+        lojaNome: 'LA SISTEMA ERP - Filial Centro',
+        cnpjLoja: '12.345.678/0001-99',
+        data: new Date().toLocaleString(),
+        vendaId: `vnd_${Date.now().toString().slice(-6)}`,
+        itens: carrinho.map(i => ({
+          nome: i.produto.nome,
+          quantidade: i.quantidade,
+          valorUnitario: i.produto.precoVenda,
+          subtotal: i.subtotal
+        })),
+        total: totalVenda,
+        formaPagamento
+      });
+
       setCarrinho([]);
       setTimeout(() => setSucessoVenda(null), 4000);
     } catch (err: any) {

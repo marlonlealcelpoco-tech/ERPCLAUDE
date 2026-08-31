@@ -3,6 +3,7 @@
 // Nenhuma regra de negócio deve morar aqui — ela fica dentro de cada módulo.
 import express from "express";
 import { errorHandler } from "./shared/errors/error-handler";
+import { iniciarWorkerSincronizacao } from "./shared/database/sync-worker";
 
 // Cadastros
 import { usuariosRouter } from "./cadastro/usuarios/usuarios.routes";
@@ -108,6 +109,7 @@ app.use(errorHandler);
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 app.listen(PORT, () => {
   console.log(`ERP rodando na porta ${PORT}`);
+  iniciarWorkerSincronizacao(5000);
 });
 
 export { app };
