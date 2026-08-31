@@ -11,7 +11,7 @@ export interface AuthResponse {
   usuario: {
     id: string;
     nome: string;
-    username: string;
+    login: string;
     perfil: PerfilUsuario;
     lojaId: string;
   };
@@ -19,7 +19,10 @@ export interface AuthResponse {
 
 export const authService = {
   login: async (payload: LoginPayload): Promise<AuthResponse> => {
-    const res = await api.post<AuthResponse>('/auth/login', payload);
+    const res = await api.post<AuthResponse>('/auth/login', {
+      login: payload.username,
+      senha: payload.senha_hash
+    });
     if (res.token) {
       setAuthToken(res.token);
     }

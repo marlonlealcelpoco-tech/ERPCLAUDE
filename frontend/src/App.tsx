@@ -11,6 +11,9 @@ import { AbrirFecharCaixa } from './pages/pdv/AbrirFecharCaixa';
 import { ReceberDebitoModal } from './pages/pdv/ReceberDebitoModal';
 import { ClientesPage } from './pages/cadastros/ClientesPage';
 import { ProdutosPage } from './pages/cadastros/ProdutosPage';
+import { FornecedoresPage } from './pages/cadastros/FornecedoresPage';
+import { UsuariosPage } from './pages/cadastros/UsuariosPage';
+import { LojasPage } from './pages/cadastros/LojasPage';
 import { EstoquePage } from './pages/estoque/EstoquePage';
 import { FinanceiroPage } from './pages/financeiro/FinanceiroPage';
 import { ComprasPage } from './pages/compras/ComprasPage';
@@ -119,11 +122,12 @@ export default function App() {
       case 'cad-produtos':
         return <ProdutosPage />;
       case 'cad-fornecedores':
-        return <div className="p-6 bg-white rounded-xl shadow border border-slate-200"><h3 className="font-bold">Cadastro de Fornecedores</h3></div>;
+        return <FornecedoresPage />;
       case 'cad-vendedores':
       case 'cad-usuarios':
+        return <UsuariosPage />;
       case 'cad-lojas':
-        return <ClientesPage />;
+        return <LojasPage />;
 
       // Módulo Estoque
       case 'est-consulta':

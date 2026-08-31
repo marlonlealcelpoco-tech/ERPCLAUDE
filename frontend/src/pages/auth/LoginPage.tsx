@@ -45,11 +45,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           ADMINISTRADOR: 'ADMINISTRADOR'
         };
 
+        const perfilUpper = (res.usuario.perfil || '').toUpperCase();
         onLoginSuccess({
           id: res.usuario.id,
           nome: res.usuario.nome,
-          username: res.usuario.username,
-          perfil: perfMap[res.usuario.perfil as string] || 'ADMINISTRADOR',
+          username: res.usuario.login || res.usuario.username,
+          perfil: perfMap[perfilUpper] || 'ADMINISTRADOR',
           lojaId: res.usuario.lojaId
         });
       } else {
