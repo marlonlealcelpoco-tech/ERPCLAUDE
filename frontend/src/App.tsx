@@ -15,6 +15,7 @@ import { EstoquePage } from './pages/estoque/EstoquePage';
 import { FinanceiroPage } from './pages/financeiro/FinanceiroPage';
 import { ComprasPage } from './pages/compras/ComprasPage';
 import { RelatoriosPage } from './pages/relatorios/RelatoriosPage';
+import { CertificadoA1Page } from './pages/fiscal/CertificadoA1Page';
 
 const LOJAS_MOCK = [
   { id: 'loja_1', nome: 'Filial A - Matriz Centro' },
@@ -148,12 +149,7 @@ export default function App() {
 
       // Módulo Fiscal
       case 'fiscal':
-        return (
-          <div className="bg-white p-6 rounded-xl border border-slate-200 space-y-3">
-            <h3 className="font-bold text-slate-900 text-base">Módulo Fiscal (NFC-e / NF-e)</h3>
-            <p className="text-xs text-slate-500">Estrutura fiscal pronta desde a arquitetura backend (regras tributárias, chave de 44 dígitos e QR-Code DANFE).</p>
-          </div>
-        );
+        return <CertificadoA1Page />;
 
       default:
         return <VendaPDV />;

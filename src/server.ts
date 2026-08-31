@@ -47,6 +47,7 @@ import { conciliacaoRouter } from "./financeiro/conciliacao/conciliacao.routes";
 import { nfeRouter } from "./fiscal/nfe/nfe.routes";
 import { nfceRouter } from "./fiscal/nfce/nfce.routes";
 import { tributacaoRouter } from "./fiscal/tributacao/tributacao.routes";
+import { certificadoRouter } from "./fiscal/certificado/certificado.routes";
 
 // Relatórios
 import { relatoriosRouter } from "./relatorios/gerais/relatorios.routes";
@@ -97,6 +98,7 @@ app.use("/financeiro/conciliacao", conciliacaoRouter);
 app.use("/fiscal/nfe", nfeRouter);
 app.use("/fiscal/nfce", nfceRouter);
 app.use("/fiscal/tributacao", tributacaoRouter);
+app.use("/sefaz", certificadoRouter);
 
 app.use("/relatorios", relatoriosRouter);
 
