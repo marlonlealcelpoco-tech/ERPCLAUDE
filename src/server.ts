@@ -4,6 +4,7 @@
 import express from "express";
 import { errorHandler } from "./shared/errors/error-handler";
 import { iniciarWorkerSincronizacao } from "./shared/database/sync-worker";
+import { popularDadosIniciais } from "./shared/database/seed";
 
 // Cadastros
 import { usuariosRouter } from "./cadastro/usuarios/usuarios.routes";
@@ -109,6 +110,7 @@ app.use(errorHandler);
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 app.listen(PORT, () => {
   console.log(`ERP rodando na porta ${PORT}`);
+  popularDadosIniciais();
   iniciarWorkerSincronizacao(5000);
 });
 
