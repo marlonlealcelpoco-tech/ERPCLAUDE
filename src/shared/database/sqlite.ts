@@ -1,9 +1,8 @@
-import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
 
 export class SqliteDatabase {
-  private db: Database.Database;
+  private db: any;
 
   constructor(dbPath?: string) {
     const finalPath = dbPath || process.env.DATABASE_FILE || path.join(process.cwd(), "database.sqlite");
@@ -11,6 +10,9 @@ export class SqliteDatabase {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
+
+    // Dynamic require so module evaluation doesn't fail on machines without better-sqlite3 native build
+    const Database = require("better-sqlite3");
     this.db = new Database(finalPath);
     this.db.pragma("journal_mode = WAL");
     this.initSchema();
@@ -81,7 +83,7 @@ export class SqliteDatabase {
     this.db.prepare("DELETE FROM fila_sincronizacao").run();
   }
 
-  getRawDb(): Database.Database {
+  getRawDb(): any {
     return this.db;
   }
 }

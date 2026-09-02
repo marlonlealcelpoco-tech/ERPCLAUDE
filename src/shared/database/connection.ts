@@ -1,4 +1,5 @@
 import { SqliteDatabase } from "./sqlite";
+import { JsonDiskDatabase } from "./json-db";
 
 export interface LocalDatabase {
   tables?: Map<string, Map<string, any>>;
@@ -66,7 +67,12 @@ export function getLocalDb(): LocalDatabase {
     if (process.env.USE_MEMDB === "true") {
       localDbInstance = new InMemoryLocalDb();
     } else {
-      localDbInstance = new SqliteDatabase();
+      try {
+        localDbInstance = new SqliteDatabase();
+      } catch (err) {
+        console.warn("[Database] SQLite nativo não disponível no ambiente (sem compilador C++ no Windows). Utilizando Banco de Dados Persistente JSON em Disco.");
+        localDbInstance = new JsonDiskDatabase();
+      }
     }
   }
   return localDbInstance;
