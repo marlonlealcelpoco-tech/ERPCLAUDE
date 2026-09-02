@@ -1,29 +1,39 @@
-// Regras de negócio do módulo contas-pagar
 import { ContasPagarRepository } from "./contas-pagar.repository";
-import type { CriarContasPagarDto, AtualizarContasPagarDto } from "./contas-pagar.schema";
-import type { ContasPagar } from "./contas-pagar.types";
-import { NotFoundError } from "../../shared/errors/app-error";
+import type { CriarContasPagarDto, BaixarContasPagarDto } from "./contas-pagar.schema";
+import type { ContaPagar } from "./contas-pagar.types";
+import { NotFoundError, ForbiddenError, ValidationError } from "../../shared/errors/app-error";
 
 export class ContasPagarService {
   constructor(private readonly repo: ContasPagarRepository = new ContasPagarRepository()) {}
 
-  async listar(): Promise<ContasPagar[]> {
+  async listar(): Promise<ContaPagar[]> {
     return this.repo.listar();
   }
 
-  async buscarPorId(id: string): Promise<ContasPagar> {
+  async buscarPorId(id: string): Promise<ContaPagar> {
     const item = await this.repo.buscarPorId(id);
-    if (!item) throw new NotFoundError("ContasPagar não encontrado");
+    if (!item) throw new NotFoundError("Conta a pagar não encontrada");
     return item;
   }
 
-  async criar(dados: CriarContasPagarDto): Promise<ContasPagar> {
-    // TODO: regras de negócio específicas de contas-pagar
-    return this.repo.criar(dados as any);
+  async criar(dados: CriarContasPagarDto): Promise<ContaPagar> {
+    return this.repo.criar({
+      ...dados,
+      dataVencimento: new Date(dados.dataVencimento),
+    });
   }
 
-  async atualizar(id: string, dados: AtualizarContasPagarDto): Promise<ContasPagar> {
-    await this.buscarPorId(id);
-    return this.repo.atualizar(id, dados as any);
+  async baixar(id: string, usuarioPerfil: string, dados: BaixarContasPagarDto): Promise<ContaPagar> {
+    const perfisPermitidos = ["financeiro", "administrador"];
+    if (!perfisPermitidos.includes(usuarioPerfil)) {
+      throw new ForbiddenError("Baixa de contas a pagar é permitida somente para Financeiro ou Administrador");
+    }
+
+    const conta = await this.buscarPorId(id);
+    if (conta.status === "pago") {
+      throw new ValidationError("Esta conta a pagar já está totalmente quitada");
+    }
+
+    return this.repo.baixar(id, dados);
   }
 }

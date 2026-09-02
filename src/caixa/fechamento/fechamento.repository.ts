@@ -1,32 +1,33 @@
-// Acesso a dados do módulo fechamento
-// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
-// então este repositório sempre lê/escreve no banco local, e a sincronização com o
-// banco central acontece de forma assíncrona (ver shared/database/sync).
 import { getLocalDb } from "../../shared/database/connection";
-import type { Fechamento, CriarFechamentoInput, AtualizarFechamentoInput } from "./fechamento.types";
+import type { RelatorioFechamentoCaixa } from "./fechamento.types";
+import { enfileirarParaSincronizacao } from "../../shared/database/sync";
+
+const TABLE_NAME = "fechamentos";
 
 export class FechamentoRepository {
-  async listar(): Promise<Fechamento[]> {
+  async listar(): Promise<RelatorioFechamentoCaixa[]> {
     const db = getLocalDb();
-    // TODO: query real
-    return [];
+    return db.find<RelatorioFechamentoCaixa>(TABLE_NAME);
   }
 
-  async buscarPorId(id: string): Promise<Fechamento | null> {
+  async buscarPorId(id: string): Promise<RelatorioFechamentoCaixa | null> {
     const db = getLocalDb();
-    // TODO: query real
-    return null;
+    return db.findById<RelatorioFechamentoCaixa>(TABLE_NAME, id);
   }
 
-  async criar(dados: CriarFechamentoInput): Promise<Fechamento> {
+  async criar(relatorio: RelatorioFechamentoCaixa): Promise<RelatorioFechamentoCaixa> {
     const db = getLocalDb();
-    // TODO: insert real + marcar para sincronização
-    throw new Error("Não implementado");
-  }
+    db.insert<RelatorioFechamentoCaixa & { id: string }>(TABLE_NAME, {
+      ...relatorio,
+      id: relatorio.caixaId,
+    });
 
-  async atualizar(id: string, dados: AtualizarFechamentoInput): Promise<Fechamento> {
-    const db = getLocalDb();
-    // TODO: update real + marcar para sincronização
-    throw new Error("Não implementado");
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "insert",
+      payload: relatorio,
+    });
+
+    return relatorio;
   }
 }

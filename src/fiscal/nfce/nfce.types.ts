@@ -1,16 +1,17 @@
-// Tipos do módulo nfce
-// TODO: substituir por tipos reais conforme desenho-erp.md
-
-export interface Nfce {
+export interface NotaFiscalConsumidor {
   id: string;
+  vendaId: string;
+  chaveAcesso: string;
+  numeroNota: number;
+  serie: number;
+  protocoloAutorizacao: string;
+  qrCodeUrl: string;
+  status: "emitida" | "cancelada" | "erro";
+  ambiente: "homologacao" | "producao";
   criadoEm: Date;
-  atualizadoEm: Date;
 }
 
-export interface CriarNfceInput {
-  // TODO: campos de criação
-}
-
-export interface AtualizarNfceInput {
-  // TODO: campos de atualização
+export interface EmitirNfceInput {
+  vendaId: string;
+  ambiente?: "homologacao" | "producao";
 }

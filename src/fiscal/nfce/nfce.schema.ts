@@ -1,11 +1,13 @@
-// Validação de entrada (zod) do módulo nfce
 import { z } from "zod";
 
-export const criarNfceSchema = z.object({
-  // TODO: definir campos obrigatórios de nfce
+export const emitirNfceSchema = z.object({
+  vendaId: z.string().min(1, "vendaId é obrigatório"),
+  ambiente: z.enum(["homologacao", "producao"]).default("homologacao"),
 });
 
-export const atualizarNfceSchema = criarNfceSchema.partial();
+export const criarNfceSchema = emitirNfceSchema;
+export const atualizarNfceSchema = emitirNfceSchema.partial();
 
-export type CriarNfceDto = z.infer<typeof criarNfceSchema>;
+export type EmitirNfceDto = z.infer<typeof emitirNfceSchema>;
+export type CriarNfceDto = EmitirNfceDto;
 export type AtualizarNfceDto = z.infer<typeof atualizarNfceSchema>;

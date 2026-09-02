@@ -1,16 +1,35 @@
-// Tipos do módulo tributacao
-// TODO: substituir por tipos reais conforme desenho-erp.md
-
-export interface Tributacao {
+export interface RegraTributaria {
   id: string;
+  descricao: string;
+  ncm: string;
+  cstIcms: string;
+  cfop: string;
+  aliquotaIcms: number;
+  aliquotaPis: number;
+  aliquotaCofins: number;
+  ativa: boolean;
   criadoEm: Date;
   atualizadoEm: Date;
 }
 
 export interface CriarTributacaoInput {
-  // TODO: campos de criação
+  descricao: string;
+  ncm: string;
+  cstIcms: string;
+  cfop: string;
+  aliquotaIcms: number;
+  aliquotaPis?: number;
+  aliquotaCofins?: number;
+  ativa?: boolean;
 }
 
 export interface AtualizarTributacaoInput {
-  // TODO: campos de atualização
+  descricao?: string;
+  ncm?: string;
+  cstIcms?: string;
+  cfop?: string;
+  aliquotaIcms?: number;
+  aliquotaPis?: number;
+  aliquotaCofins?: number;
+  ativa?: boolean;
 }

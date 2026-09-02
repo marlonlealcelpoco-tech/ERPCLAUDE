@@ -1,29 +1,25 @@
-// Regras de negócio do módulo notas
 import { NotasRepository } from "./notas.repository";
-import type { CriarNotasDto, AtualizarNotasDto } from "./notas.schema";
-import type { Notas } from "./notas.types";
+import type { CriarNotasDto } from "./notas.schema";
+import type { NotaCompra } from "./notas.types";
 import { NotFoundError } from "../../shared/errors/app-error";
 
 export class NotasService {
   constructor(private readonly repo: NotasRepository = new NotasRepository()) {}
 
-  async listar(): Promise<Notas[]> {
+  async listar(): Promise<NotaCompra[]> {
     return this.repo.listar();
   }
 
-  async buscarPorId(id: string): Promise<Notas> {
+  async buscarPorId(id: string): Promise<NotaCompra> {
     const item = await this.repo.buscarPorId(id);
-    if (!item) throw new NotFoundError("Notas não encontrado");
+    if (!item) throw new NotFoundError("Nota de compra não encontrada");
     return item;
   }
 
-  async criar(dados: CriarNotasDto): Promise<Notas> {
-    // TODO: regras de negócio específicas de notas
-    return this.repo.criar(dados as any);
-  }
-
-  async atualizar(id: string, dados: AtualizarNotasDto): Promise<Notas> {
-    await this.buscarPorId(id);
-    return this.repo.atualizar(id, dados as any);
+  async registrarNota(dados: CriarNotasDto): Promise<NotaCompra> {
+    return this.repo.criar({
+      ...dados,
+      dataEmissao: dados.dataEmissao ? new Date(dados.dataEmissao) : undefined,
+    });
   }
 }

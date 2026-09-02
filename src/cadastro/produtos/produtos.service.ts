@@ -1,29 +1,42 @@
-// Regras de negócio do módulo produtos
 import { ProdutosRepository } from "./produtos.repository";
 import type { CriarProdutosDto, AtualizarProdutosDto } from "./produtos.schema";
-import type { Produtos } from "./produtos.types";
-import { NotFoundError } from "../../shared/errors/app-error";
+import type { Produto } from "./produtos.types";
+import { NotFoundError, ConflictError } from "../../shared/errors/app-error";
 
 export class ProdutosService {
   constructor(private readonly repo: ProdutosRepository = new ProdutosRepository()) {}
 
-  async listar(): Promise<Produtos[]> {
+  async listar(termo?: string): Promise<Produto[]> {
+    if (termo) {
+      return this.repo.buscarPorTermo(termo);
+    }
     return this.repo.listar();
   }
 
-  async buscarPorId(id: string): Promise<Produtos> {
+  async buscarPorId(id: string): Promise<Produto> {
     const item = await this.repo.buscarPorId(id);
-    if (!item) throw new NotFoundError("Produtos não encontrado");
+    if (!item) throw new NotFoundError("Produto não encontrado");
     return item;
   }
 
-  async criar(dados: CriarProdutosDto): Promise<Produtos> {
-    // TODO: regras de negócio específicas de produtos
-    return this.repo.criar(dados as any);
+  async criar(dados: CriarProdutosDto): Promise<Produto> {
+    if (dados.codigoBarras) {
+      const existente = await this.repo.buscarPorCodigoBarras(dados.codigoBarras);
+      if (existente) {
+        throw new ConflictError("Já existe um produto cadastrado com este código de barras");
+      }
+    }
+    return this.repo.criar(dados);
   }
 
-  async atualizar(id: string, dados: AtualizarProdutosDto): Promise<Produtos> {
+  async atualizar(id: string, dados: AtualizarProdutosDto): Promise<Produto> {
     await this.buscarPorId(id);
-    return this.repo.atualizar(id, dados as any);
+    if (dados.codigoBarras) {
+      const existente = await this.repo.buscarPorCodigoBarras(dados.codigoBarras);
+      if (existente && existente.id !== id) {
+        throw new ConflictError("Já existe outro produto cadastrado com este código de barras");
+      }
+    }
+    return this.repo.atualizar(id, dados);
   }
 }

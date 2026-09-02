@@ -1,4 +1,3 @@
-// Controller HTTP do módulo clientes
 import type { Request, Response, NextFunction } from "express";
 import { ClientesService } from "./clientes.service";
 import { criarClientesSchema, atualizarClientesSchema } from "./clientes.schema";
@@ -8,7 +7,8 @@ const service = new ClientesService();
 export const clientesController = {
   async listar(req: Request, res: Response, next: NextFunction) {
     try {
-      const itens = await service.listar();
+      const termo = typeof req.query.busca === "string" ? req.query.busca : undefined;
+      const itens = await service.listar(termo);
       res.json(itens);
     } catch (err) {
       next(err);

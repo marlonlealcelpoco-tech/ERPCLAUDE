@@ -1,7 +1,6 @@
-// Controller HTTP do módulo saidas
 import type { Request, Response, NextFunction } from "express";
 import { SaidasService } from "./saidas.service";
-import { criarSaidasSchema, atualizarSaidasSchema } from "./saidas.schema";
+import { criarSaidasSchema } from "./saidas.schema";
 
 const service = new SaidasService();
 
@@ -24,21 +23,12 @@ export const saidasController = {
     }
   },
 
-  async criar(req: Request, res: Response, next: NextFunction) {
+  async registrarSaida(req: Request, res: Response, next: NextFunction) {
     try {
       const dados = criarSaidasSchema.parse(req.body);
-      const item = await service.criar(dados);
+      const usuarioId = req.usuario!.id;
+      const item = await service.registrarSaida(usuarioId, dados);
       res.status(201).json(item);
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async atualizar(req: Request, res: Response, next: NextFunction) {
-    try {
-      const dados = atualizarSaidasSchema.parse(req.body);
-      const item = await service.atualizar(req.params.id, dados);
-      res.json(item);
     } catch (err) {
       next(err);
     }

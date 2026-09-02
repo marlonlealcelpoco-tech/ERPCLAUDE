@@ -1,7 +1,6 @@
-// Controller HTTP do módulo ajustes
 import type { Request, Response, NextFunction } from "express";
 import { AjustesService } from "./ajustes.service";
-import { criarAjustesSchema, atualizarAjustesSchema } from "./ajustes.schema";
+import { criarAjustesSchema } from "./ajustes.schema";
 
 const service = new AjustesService();
 
@@ -24,21 +23,12 @@ export const ajustesController = {
     }
   },
 
-  async criar(req: Request, res: Response, next: NextFunction) {
+  async registrarAjuste(req: Request, res: Response, next: NextFunction) {
     try {
       const dados = criarAjustesSchema.parse(req.body);
-      const item = await service.criar(dados);
+      const usuarioId = req.usuario!.id;
+      const item = await service.registrarAjuste(usuarioId, dados);
       res.status(201).json(item);
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async atualizar(req: Request, res: Response, next: NextFunction) {
-    try {
-      const dados = atualizarAjustesSchema.parse(req.body);
-      const item = await service.atualizar(req.params.id, dados);
-      res.json(item);
     } catch (err) {
       next(err);
     }

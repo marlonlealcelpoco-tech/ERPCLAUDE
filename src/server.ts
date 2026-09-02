@@ -3,6 +3,8 @@
 // Nenhuma regra de negócio deve morar aqui — ela fica dentro de cada módulo.
 import express from "express";
 import { errorHandler } from "./shared/errors/error-handler";
+import { iniciarWorkerSincronizacao } from "./shared/database/sync-worker";
+import { popularDadosIniciais } from "./shared/database/seed";
 
 // Cadastros
 import { usuariosRouter } from "./cadastro/usuarios/usuarios.routes";
@@ -47,6 +49,7 @@ import { conciliacaoRouter } from "./financeiro/conciliacao/conciliacao.routes";
 import { nfeRouter } from "./fiscal/nfe/nfe.routes";
 import { nfceRouter } from "./fiscal/nfce/nfce.routes";
 import { tributacaoRouter } from "./fiscal/tributacao/tributacao.routes";
+import { certificadoRouter } from "./fiscal/certificado/certificado.routes";
 
 // Relatórios
 import { relatoriosRouter } from "./relatorios/gerais/relatorios.routes";
@@ -67,12 +70,13 @@ app.use("/cadastro/fornecedores", fornecedoresRouter);
 app.use("/cadastro/produtos", produtosRouter);
 app.use("/cadastro/lojas", lojasRouter);
 
+app.use("/compras/manual", comprasRouter);
 app.use("/compras", comprasRouter);
 app.use("/compras/notas", notasRouter);
 app.use("/compras/xml", xmlRouter);
 
 app.use("/vendas/pdv", pdvRouter);
-app.use("/vendas", vendasRouter);
+app.use("/vendas", pdvRouter);
 app.use("/vendas/devolucoes", devolucoesRouter);
 app.use("/vendas/contas-a-prazo", contasAPrazoRouter);
 
@@ -87,6 +91,7 @@ app.use("/estoque/saidas", saidasRouter);
 app.use("/estoque/ajustes", ajustesRouter);
 app.use("/estoque/avarias", avariasRouter);
 app.use("/estoque/inventario", inventarioRouter);
+app.use("/estoque/conferencia", inventarioRouter);
 
 app.use("/financeiro/contas-pagar", contasPagarRouter);
 app.use("/financeiro/contas-receber", contasReceberRouter);
@@ -97,6 +102,7 @@ app.use("/financeiro/conciliacao", conciliacaoRouter);
 app.use("/fiscal/nfe", nfeRouter);
 app.use("/fiscal/nfce", nfceRouter);
 app.use("/fiscal/tributacao", tributacaoRouter);
+app.use("/sefaz", certificadoRouter);
 
 app.use("/relatorios", relatoriosRouter);
 
@@ -106,6 +112,8 @@ app.use(errorHandler);
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 app.listen(PORT, () => {
   console.log(`ERP rodando na porta ${PORT}`);
+  popularDadosIniciais();
+  iniciarWorkerSincronizacao(5000);
 });
 
 export { app };

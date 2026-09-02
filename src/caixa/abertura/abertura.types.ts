@@ -1,16 +1,15 @@
-// Tipos do módulo abertura
-// TODO: substituir por tipos reais conforme desenho-erp.md
-
-export interface Abertura {
+export interface CaixaAbertura {
   id: string;
-  criadoEm: Date;
-  atualizadoEm: Date;
+  usuarioId: string;
+  lojaId: string;
+  valorInicial: number;
+  status: "aberto" | "fechado";
+  abertoEm: Date;
+  fechadoEm?: Date;
 }
 
 export interface CriarAberturaInput {
-  // TODO: campos de criação
-}
-
-export interface AtualizarAberturaInput {
-  // TODO: campos de atualização
+  usuarioId: string;
+  lojaId: string;
+  valorInicial: number;
 }

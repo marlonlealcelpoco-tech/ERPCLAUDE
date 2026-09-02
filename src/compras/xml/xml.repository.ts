@@ -1,32 +1,34 @@
-// Acesso a dados do módulo xml
-// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
-// então este repositório sempre lê/escreve no banco local, e a sincronização com o
-// banco central acontece de forma assíncrona (ver shared/database/sync).
 import { getLocalDb } from "../../shared/database/connection";
-import type { Xml, CriarXmlInput, AtualizarXmlInput } from "./xml.types";
+import type { DadosXmlNfe } from "./xml.types";
+import { enfileirarParaSincronizacao } from "../../shared/database/sync";
+
+const TABLE_NAME = "xml_importados";
 
 export class XmlRepository {
-  async listar(): Promise<Xml[]> {
+  async listar(): Promise<DadosXmlNfe[]> {
     const db = getLocalDb();
-    // TODO: query real
-    return [];
+    return db.find<DadosXmlNfe>(TABLE_NAME);
   }
 
-  async buscarPorId(id: string): Promise<Xml | null> {
+  async buscarPorChave(chaveNfe: string): Promise<DadosXmlNfe | null> {
     const db = getLocalDb();
-    // TODO: query real
-    return null;
+    const [item] = db.find<DadosXmlNfe>(TABLE_NAME, (x) => x.chaveNfe === chaveNfe);
+    return item || null;
   }
 
-  async criar(dados: CriarXmlInput): Promise<Xml> {
+  async salvar(dados: DadosXmlNfe): Promise<DadosXmlNfe> {
     const db = getLocalDb();
-    // TODO: insert real + marcar para sincronização
-    throw new Error("Não implementado");
-  }
+    db.insert<DadosXmlNfe & { id: string }>(TABLE_NAME, {
+      ...dados,
+      id: dados.chaveNfe || `xml_${Date.now()}`,
+    });
 
-  async atualizar(id: string, dados: AtualizarXmlInput): Promise<Xml> {
-    const db = getLocalDb();
-    // TODO: update real + marcar para sincronização
-    throw new Error("Não implementado");
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "insert",
+      payload: dados,
+    });
+
+    return dados;
   }
 }

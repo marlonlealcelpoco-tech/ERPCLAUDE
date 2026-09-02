@@ -1,29 +1,45 @@
-// Regras de negócio do módulo ajustes
 import { AjustesRepository } from "./ajustes.repository";
-import type { CriarAjustesDto, AtualizarAjustesDto } from "./ajustes.schema";
-import type { Ajustes } from "./ajustes.types";
+import { ProdutosRepository } from "../../cadastro/produtos/produtos.repository";
+import type { CriarAjustesDto } from "./ajustes.schema";
+import type { AjusteEstoque } from "./ajustes.types";
 import { NotFoundError } from "../../shared/errors/app-error";
 
 export class AjustesService {
-  constructor(private readonly repo: AjustesRepository = new AjustesRepository()) {}
+  constructor(
+    private readonly repo: AjustesRepository = new AjustesRepository(),
+    private readonly produtosRepo: ProdutosRepository = new ProdutosRepository()
+  ) {}
 
-  async listar(): Promise<Ajustes[]> {
+  async listar(): Promise<AjusteEstoque[]> {
     return this.repo.listar();
   }
 
-  async buscarPorId(id: string): Promise<Ajustes> {
+  async buscarPorId(id: string): Promise<AjusteEstoque> {
     const item = await this.repo.buscarPorId(id);
-    if (!item) throw new NotFoundError("Ajustes não encontrado");
+    if (!item) throw new NotFoundError("Ajuste de estoque não encontrado");
     return item;
   }
 
-  async criar(dados: CriarAjustesDto): Promise<Ajustes> {
-    // TODO: regras de negócio específicas de ajustes
-    return this.repo.criar(dados as any);
-  }
+  async registrarAjuste(usuarioId: string, dados: CriarAjustesDto): Promise<AjusteEstoque> {
+    const produto = await this.produtosRepo.buscarPorId(dados.produtoId);
+    if (!produto) {
+      throw new NotFoundError("Produto não encontrado");
+    }
 
-  async atualizar(id: string, dados: AtualizarAjustesDto): Promise<Ajustes> {
-    await this.buscarPorId(id);
-    return this.repo.atualizar(id, dados as any);
+    const estoqueAnterior = produto.estoqueAtual;
+    const diferenca = dados.novoEstoque - estoqueAnterior;
+
+    await this.produtosRepo.atualizar(produto.id, {
+      estoqueAtual: dados.novoEstoque,
+    });
+
+    return this.repo.criar({
+      produtoId: dados.produtoId,
+      estoqueAnterior,
+      novoEstoque: dados.novoEstoque,
+      diferenca,
+      justificativa: dados.justificativa,
+      usuarioId,
+    });
   }
 }

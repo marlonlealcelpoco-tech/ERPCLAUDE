@@ -1,8 +1,7 @@
-// Validação de entrada (zod) do módulo fechamento
 import { z } from "zod";
 
 export const criarFechamentoSchema = z.object({
-  // TODO: definir campos obrigatórios de fechamento
+  dinheiroContado: z.number().nonnegative("Dinheiro contado não pode ser negativo"),
 });
 
 export const atualizarFechamentoSchema = criarFechamentoSchema.partial();

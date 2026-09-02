@@ -1,16 +1,39 @@
-// Tipos do módulo usuarios
-// TODO: substituir por tipos reais conforme desenho-erp.md
+// Tipos do módulo usuarios conforme desenho-erp.md
 
-export interface Usuarios {
+export type PerfilUsuario =
+  | "vendedor"
+  | "supervisor"
+  | "estoquista"
+  | "gerente"
+  | "financeiro"
+  | "administrador";
+
+export interface Usuario {
   id: string;
+  nome: string;
+  login: string;
+  senhaHash?: string;
+  perfil: PerfilUsuario;
+  lojaId: string;
+  ativo: boolean;
   criadoEm: Date;
   atualizadoEm: Date;
 }
 
-export interface CriarUsuariosInput {
-  // TODO: campos de criação
+export interface CriarUsuarioInput {
+  nome: string;
+  login: string;
+  senha?: string;
+  perfil: PerfilUsuario;
+  lojaId: string;
+  ativo?: boolean;
 }
 
-export interface AtualizarUsuariosInput {
-  // TODO: campos de atualização
+export interface AtualizarUsuarioInput {
+  nome?: string;
+  login?: string;
+  senha?: string;
+  perfil?: PerfilUsuario;
+  lojaId?: string;
+  ativo?: boolean;
 }

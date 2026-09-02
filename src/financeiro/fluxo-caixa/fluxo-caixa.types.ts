@@ -1,16 +1,28 @@
-// Tipos do módulo fluxo-caixa
-// TODO: substituir por tipos reais conforme desenho-erp.md
-
-export interface FluxoCaixa {
+export interface LancamentoFluxoCaixa {
   id: string;
-  criadoEm: Date;
-  atualizadoEm: Date;
+  tipo: "entrada" | "saida";
+  categoria: string;
+  descricao: string;
+  valor: number;
+  vendedorId?: string;
+  lojaId: string;
+  data: Date;
 }
 
-export interface CriarFluxoCaixaInput {
-  // TODO: campos de criação
+export interface RelatorioFluxoCaixa {
+  periodoInicio?: Date;
+  periodoFim?: Date;
+  vendedorId?: string;
+  lojaId?: string;
+  totalEntradas: number;
+  totalSaidas: number;
+  saldoLiquido: number;
+  lancamentos: LancamentoFluxoCaixa[];
 }
 
-export interface AtualizarFluxoCaixaInput {
-  // TODO: campos de atualização
+export interface FiltroFluxoCaixa {
+  vendedorId?: string;
+  lojaId?: string;
+  dataInicio?: Date;
+  dataFim?: Date;
 }

@@ -1,7 +1,6 @@
-// Controller HTTP do módulo fechamento
 import type { Request, Response, NextFunction } from "express";
 import { FechamentoService } from "./fechamento.service";
-import { criarFechamentoSchema, atualizarFechamentoSchema } from "./fechamento.schema";
+import { criarFechamentoSchema } from "./fechamento.schema";
 
 const service = new FechamentoService();
 
@@ -24,21 +23,22 @@ export const fechamentoController = {
     }
   },
 
-  async criar(req: Request, res: Response, next: NextFunction) {
+  async fecharCaixa(req: Request, res: Response, next: NextFunction) {
     try {
       const dados = criarFechamentoSchema.parse(req.body);
-      const item = await service.criar(dados);
+      const usuarioId = req.usuario!.id;
+      const item = await service.fecharCaixa(usuarioId, dados);
       res.status(201).json(item);
     } catch (err) {
       next(err);
     }
   },
 
-  async atualizar(req: Request, res: Response, next: NextFunction) {
+  async exportarPdf(req: Request, res: Response, next: NextFunction) {
     try {
-      const dados = atualizarFechamentoSchema.parse(req.body);
-      const item = await service.atualizar(req.params.id, dados);
-      res.json(item);
+      const relatorioPdf = await service.gerarPdfFechamento(req.params.id);
+      res.setHeader("Content-Type", "text/plain");
+      res.send(relatorioPdf);
     } catch (err) {
       next(err);
     }

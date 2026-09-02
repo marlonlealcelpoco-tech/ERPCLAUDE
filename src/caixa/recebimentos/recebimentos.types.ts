@@ -1,16 +1,21 @@
-// Tipos do módulo recebimentos
-// TODO: substituir por tipos reais conforme desenho-erp.md
+export type FormaPagamentoRecebimento = "dinheiro" | "debito" | "credito" | "pix";
 
-export interface Recebimentos {
+export interface RecebimentoCliente {
   id: string;
+  caixaId: string;
+  vendedorId: string;
+  clienteId: string;
+  nomeCliente: string;
+  valorRecebido: number;
+  formaPagamento: FormaPagamentoRecebimento;
   criadoEm: Date;
-  atualizadoEm: Date;
 }
 
-export interface CriarRecebimentosInput {
-  // TODO: campos de criação
-}
-
-export interface AtualizarRecebimentosInput {
-  // TODO: campos de atualização
+export interface CriarRecebimentoInput {
+  caixaId: string;
+  vendedorId: string;
+  clienteId: string;
+  nomeCliente: string;
+  valorRecebido: number;
+  formaPagamento: FormaPagamentoRecebimento;
 }

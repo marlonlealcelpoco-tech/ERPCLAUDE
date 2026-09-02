@@ -1,11 +1,14 @@
-// Regras de negócio do módulo sangria
 import { SangriaRepository } from "./sangria.repository";
-import type { CriarSangriaDto, AtualizarSangriaDto } from "./sangria.schema";
+import { AberturaRepository } from "../abertura/abertura.repository";
+import type { CriarSangriaDto } from "./sangria.schema";
 import type { Sangria } from "./sangria.types";
 import { NotFoundError } from "../../shared/errors/app-error";
 
 export class SangriaService {
-  constructor(private readonly repo: SangriaRepository = new SangriaRepository()) {}
+  constructor(
+    private readonly repo: SangriaRepository = new SangriaRepository(),
+    private readonly aberturaRepo: AberturaRepository = new AberturaRepository()
+  ) {}
 
   async listar(): Promise<Sangria[]> {
     return this.repo.listar();
@@ -13,17 +16,21 @@ export class SangriaService {
 
   async buscarPorId(id: string): Promise<Sangria> {
     const item = await this.repo.buscarPorId(id);
-    if (!item) throw new NotFoundError("Sangria não encontrado");
+    if (!item) throw new NotFoundError("Sangria não encontrada");
     return item;
   }
 
-  async criar(dados: CriarSangriaDto): Promise<Sangria> {
-    // TODO: regras de negócio específicas de sangria
-    return this.repo.criar(dados as any);
-  }
+  async registrarSangria(usuarioId: string, dados: CriarSangriaDto): Promise<Sangria> {
+    const caixaAberto = await this.aberturaRepo.buscarCaixaAbertoPorUsuario(usuarioId);
+    if (!caixaAberto) {
+      throw new NotFoundError("Nenhum caixa aberto para registrar sangria");
+    }
 
-  async atualizar(id: string, dados: AtualizarSangriaDto): Promise<Sangria> {
-    await this.buscarPorId(id);
-    return this.repo.atualizar(id, dados as any);
+    return this.repo.criar({
+      caixaId: caixaAberto.id,
+      usuarioId,
+      valor: dados.valor,
+      observacao: dados.observacao,
+    });
   }
 }

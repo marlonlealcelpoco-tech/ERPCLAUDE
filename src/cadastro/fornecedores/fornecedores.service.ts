@@ -1,29 +1,27 @@
-// Regras de negócio do módulo fornecedores
 import { FornecedoresRepository } from "./fornecedores.repository";
 import type { CriarFornecedoresDto, AtualizarFornecedoresDto } from "./fornecedores.schema";
-import type { Fornecedores } from "./fornecedores.types";
+import type { Fornecedor } from "./fornecedores.types";
 import { NotFoundError } from "../../shared/errors/app-error";
 
 export class FornecedoresService {
   constructor(private readonly repo: FornecedoresRepository = new FornecedoresRepository()) {}
 
-  async listar(): Promise<Fornecedores[]> {
+  async listar(): Promise<Fornecedor[]> {
     return this.repo.listar();
   }
 
-  async buscarPorId(id: string): Promise<Fornecedores> {
+  async buscarPorId(id: string): Promise<Fornecedor> {
     const item = await this.repo.buscarPorId(id);
-    if (!item) throw new NotFoundError("Fornecedores não encontrado");
+    if (!item) throw new NotFoundError("Fornecedor não encontrado");
     return item;
   }
 
-  async criar(dados: CriarFornecedoresDto): Promise<Fornecedores> {
-    // TODO: regras de negócio específicas de fornecedores
-    return this.repo.criar(dados as any);
+  async criar(dados: CriarFornecedoresDto): Promise<Fornecedor> {
+    return this.repo.criar(dados);
   }
 
-  async atualizar(id: string, dados: AtualizarFornecedoresDto): Promise<Fornecedores> {
+  async atualizar(id: string, dados: AtualizarFornecedoresDto): Promise<Fornecedor> {
     await this.buscarPorId(id);
-    return this.repo.atualizar(id, dados as any);
+    return this.repo.atualizar(id, dados);
   }
 }

@@ -1,8 +1,9 @@
-// Validação de entrada (zod) do módulo entradas
 import { z } from "zod";
 
 export const criarEntradasSchema = z.object({
-  // TODO: definir campos obrigatórios de entradas
+  produtoId: z.string().min(1, "produtoId é obrigatório"),
+  quantidade: z.number().positive("Quantidade deve ser maior que zero"),
+  observacao: z.string().optional(),
 });
 
 export const atualizarEntradasSchema = criarEntradasSchema.partial();

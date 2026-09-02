@@ -1,16 +1,29 @@
-// Tipos do módulo fornecedores
-// TODO: substituir por tipos reais conforme desenho-erp.md
-
-export interface Fornecedores {
+export interface Fornecedor {
   id: string;
+  nomeRazao: string;
+  nomeFantasia?: string;
+  cnpjCpf?: string;
+  telefone?: string;
+  email?: string;
+  endereco?: string;
   criadoEm: Date;
   atualizadoEm: Date;
 }
 
-export interface CriarFornecedoresInput {
-  // TODO: campos de criação
+export interface CriarFornecedorInput {
+  nomeRazao: string;
+  nomeFantasia?: string;
+  cnpjCpf?: string;
+  telefone?: string;
+  email?: string;
+  endereco?: string;
 }
 
-export interface AtualizarFornecedoresInput {
-  // TODO: campos de atualização
+export interface AtualizarFornecedorInput {
+  nomeRazao?: string;
+  nomeFantasia?: string;
+  cnpjCpf?: string;
+  telefone?: string;
+  email?: string;
+  endereco?: string;
 }

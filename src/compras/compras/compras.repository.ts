@@ -1,32 +1,28 @@
-// Acesso a dados do módulo compras
-// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
-// então este repositório sempre lê/escreve no banco local, e a sincronização com o
-// banco central acontece de forma assíncrona (ver shared/database/sync).
 import { getLocalDb } from "../../shared/database/connection";
-import type { Compras, CriarComprasInput, AtualizarComprasInput } from "./compras.types";
+import type { Compra } from "./compras.types";
+import { enfileirarParaSincronizacao } from "../../shared/database/sync";
+
+const TABLE_NAME = "compras";
 
 export class ComprasRepository {
-  async listar(): Promise<Compras[]> {
+  async listar(): Promise<Compra[]> {
     const db = getLocalDb();
-    // TODO: query real
-    return [];
+    return db.find<Compra>(TABLE_NAME);
   }
 
-  async buscarPorId(id: string): Promise<Compras | null> {
+  async buscarPorId(id: string): Promise<Compra | null> {
     const db = getLocalDb();
-    // TODO: query real
-    return null;
+    return db.findById<Compra>(TABLE_NAME, id);
   }
 
-  async criar(dados: CriarComprasInput): Promise<Compras> {
+  async criar(compra: Compra): Promise<Compra> {
     const db = getLocalDb();
-    // TODO: insert real + marcar para sincronização
-    throw new Error("Não implementado");
-  }
-
-  async atualizar(id: string, dados: AtualizarComprasInput): Promise<Compras> {
-    const db = getLocalDb();
-    // TODO: update real + marcar para sincronização
-    throw new Error("Não implementado");
+    db.insert<Compra>(TABLE_NAME, compra);
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "insert",
+      payload: compra,
+    });
+    return compra;
   }
 }

@@ -1,32 +1,59 @@
-// Acesso a dados do módulo fornecedores
-// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
-// então este repositório sempre lê/escreve no banco local, e a sincronização com o
-// banco central acontece de forma assíncrona (ver shared/database/sync).
 import { getLocalDb } from "../../shared/database/connection";
-import type { Fornecedores, CriarFornecedoresInput, AtualizarFornecedoresInput } from "./fornecedores.types";
+import type { Fornecedor, CriarFornecedorInput, AtualizarFornecedorInput } from "./fornecedores.types";
+import { enfileirarParaSincronizacao } from "../../shared/database/sync";
+
+const TABLE_NAME = "fornecedores";
 
 export class FornecedoresRepository {
-  async listar(): Promise<Fornecedores[]> {
+  async listar(): Promise<Fornecedor[]> {
     const db = getLocalDb();
-    // TODO: query real
-    return [];
+    return db.find<Fornecedor>(TABLE_NAME);
   }
 
-  async buscarPorId(id: string): Promise<Fornecedores | null> {
+  async buscarPorId(id: string): Promise<Fornecedor | null> {
     const db = getLocalDb();
-    // TODO: query real
-    return null;
+    return db.findById<Fornecedor>(TABLE_NAME, id);
   }
 
-  async criar(dados: CriarFornecedoresInput): Promise<Fornecedores> {
+  async criar(dados: CriarFornecedorInput): Promise<Fornecedor> {
     const db = getLocalDb();
-    // TODO: insert real + marcar para sincronização
-    throw new Error("Não implementado");
+    const agora = new Date();
+    const novoFornecedor: Fornecedor = {
+      id: `for_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      nomeRazao: dados.nomeRazao,
+      nomeFantasia: dados.nomeFantasia,
+      cnpjCpf: dados.cnpjCpf,
+      telefone: dados.telefone,
+      email: dados.email,
+      endereco: dados.endereco,
+      criadoEm: agora,
+      atualizadoEm: agora,
+    };
+
+    db.insert<Fornecedor>(TABLE_NAME, novoFornecedor);
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "insert",
+      payload: novoFornecedor,
+    });
+
+    return novoFornecedor;
   }
 
-  async atualizar(id: string, dados: AtualizarFornecedoresInput): Promise<Fornecedores> {
+  async atualizar(id: string, dados: AtualizarFornecedorInput): Promise<Fornecedor> {
     const db = getLocalDb();
-    // TODO: update real + marcar para sincronização
-    throw new Error("Não implementado");
+    const payload = {
+      ...dados,
+      atualizadoEm: new Date(),
+    };
+
+    const fornecedorAtualizado = db.update<Fornecedor>(TABLE_NAME, id, payload);
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "update",
+      payload: fornecedorAtualizado,
+    });
+
+    return fornecedorAtualizado;
   }
 }

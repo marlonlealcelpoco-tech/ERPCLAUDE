@@ -1,32 +1,34 @@
-// Acesso a dados do módulo nfce
-// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
-// então este repositório sempre lê/escreve no banco local, e a sincronização com o
-// banco central acontece de forma assíncrona (ver shared/database/sync).
 import { getLocalDb } from "../../shared/database/connection";
-import type { Nfce, CriarNfceInput, AtualizarNfceInput } from "./nfce.types";
+import type { NotaFiscalConsumidor } from "./nfce.types";
+import { enfileirarParaSincronizacao } from "../../shared/database/sync";
+
+const TABLE_NAME = "nfce_emitidas";
 
 export class NfceRepository {
-  async listar(): Promise<Nfce[]> {
+  async listar(): Promise<NotaFiscalConsumidor[]> {
     const db = getLocalDb();
-    // TODO: query real
-    return [];
+    return db.find<NotaFiscalConsumidor>(TABLE_NAME);
   }
 
-  async buscarPorId(id: string): Promise<Nfce | null> {
+  async buscarPorId(id: string): Promise<NotaFiscalConsumidor | null> {
     const db = getLocalDb();
-    // TODO: query real
-    return null;
+    return db.findById<NotaFiscalConsumidor>(TABLE_NAME, id);
   }
 
-  async criar(dados: CriarNfceInput): Promise<Nfce> {
+  async buscarPorVendaId(vendaId: string): Promise<NotaFiscalConsumidor | null> {
     const db = getLocalDb();
-    // TODO: insert real + marcar para sincronização
-    throw new Error("Não implementado");
+    const [item] = db.find<NotaFiscalConsumidor>(TABLE_NAME, (n) => n.vendaId === vendaId);
+    return item || null;
   }
 
-  async atualizar(id: string, dados: AtualizarNfceInput): Promise<Nfce> {
+  async salvar(nfce: NotaFiscalConsumidor): Promise<NotaFiscalConsumidor> {
     const db = getLocalDb();
-    // TODO: update real + marcar para sincronização
-    throw new Error("Não implementado");
+    db.insert<NotaFiscalConsumidor>(TABLE_NAME, nfce);
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "insert",
+      payload: nfce,
+    });
+    return nfce;
   }
 }

@@ -1,16 +1,15 @@
-// Tipos do módulo saidas
-// TODO: substituir por tipos reais conforme desenho-erp.md
-
-export interface Saidas {
+export interface SaidaEstoque {
   id: string;
+  produtoId: string;
+  quantidade: number;
+  motivo?: string;
+  usuarioId: string;
   criadoEm: Date;
-  atualizadoEm: Date;
 }
 
-export interface CriarSaidasInput {
-  // TODO: campos de criação
-}
-
-export interface AtualizarSaidasInput {
-  // TODO: campos de atualização
+export interface CriarSaidaInput {
+  produtoId: string;
+  quantidade: number;
+  motivo?: string;
+  usuarioId: string;
 }

@@ -1,7 +1,6 @@
-// Controller HTTP do módulo contas-pagar
 import type { Request, Response, NextFunction } from "express";
 import { ContasPagarService } from "./contas-pagar.service";
-import { criarContasPagarSchema, atualizarContasPagarSchema } from "./contas-pagar.schema";
+import { criarContasPagarSchema, baixarContasPagarSchema } from "./contas-pagar.schema";
 
 const service = new ContasPagarService();
 
@@ -34,10 +33,11 @@ export const contasPagarController = {
     }
   },
 
-  async atualizar(req: Request, res: Response, next: NextFunction) {
+  async baixar(req: Request, res: Response, next: NextFunction) {
     try {
-      const dados = atualizarContasPagarSchema.parse(req.body);
-      const item = await service.atualizar(req.params.id, dados);
+      const dados = baixarContasPagarSchema.parse(req.body);
+      const usuarioPerfil = req.usuario!.perfil;
+      const item = await service.baixar(req.params.id, usuarioPerfil, dados);
       res.json(item);
     } catch (err) {
       next(err);

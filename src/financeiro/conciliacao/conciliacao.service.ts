@@ -1,29 +1,38 @@
-// Regras de negócio do módulo conciliacao
 import { ConciliacaoRepository } from "./conciliacao.repository";
-import type { CriarConciliacaoDto, AtualizarConciliacaoDto } from "./conciliacao.schema";
-import type { Conciliacao } from "./conciliacao.types";
+import { FluxoCaixaRepository } from "../fluxo-caixa/fluxo-caixa.repository";
+import type { CriarConciliacaoDto } from "./conciliacao.schema";
+import type { ConciliacaoBancaria } from "./conciliacao.types";
 import { NotFoundError } from "../../shared/errors/app-error";
 
 export class ConciliacaoService {
-  constructor(private readonly repo: ConciliacaoRepository = new ConciliacaoRepository()) {}
+  constructor(
+    private readonly repo: ConciliacaoRepository = new ConciliacaoRepository(),
+    private readonly fluxoCaixaRepo: FluxoCaixaRepository = new FluxoCaixaRepository()
+  ) {}
 
-  async listar(): Promise<Conciliacao[]> {
+  async listar(): Promise<ConciliacaoBancaria[]> {
     return this.repo.listar();
   }
 
-  async buscarPorId(id: string): Promise<Conciliacao> {
+  async buscarPorId(id: string): Promise<ConciliacaoBancaria> {
     const item = await this.repo.buscarPorId(id);
-    if (!item) throw new NotFoundError("Conciliacao não encontrado");
+    if (!item) throw new NotFoundError("Conciliação não encontrada");
     return item;
   }
 
-  async criar(dados: CriarConciliacaoDto): Promise<Conciliacao> {
-    // TODO: regras de negócio específicas de conciliacao
-    return this.repo.criar(dados as any);
-  }
+  async realizarConciliacao(dados: CriarConciliacaoDto): Promise<ConciliacaoBancaria> {
+    const relatorioFluxo = await this.fluxoCaixaRepo.gerarRelatorio({
+      lojaId: dados.lojaId,
+    });
 
-  async atualizar(id: string, dados: AtualizarConciliacaoDto): Promise<Conciliacao> {
-    await this.buscarPorId(id);
-    return this.repo.atualizar(id, dados as any);
+    const saldoSistema = relatorioFluxo.saldoLiquido;
+
+    return this.repo.criar({
+      lojaId: dados.lojaId,
+      data: new Date(),
+      saldoExtrato: dados.saldoExtrato,
+      saldoSistema,
+      observacao: dados.observacao,
+    });
   }
 }

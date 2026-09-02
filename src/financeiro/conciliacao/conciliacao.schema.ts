@@ -1,8 +1,9 @@
-// Validação de entrada (zod) do módulo conciliacao
 import { z } from "zod";
 
 export const criarConciliacaoSchema = z.object({
-  // TODO: definir campos obrigatórios de conciliacao
+  lojaId: z.string().min(1, "lojaId é obrigatório"),
+  saldoExtrato: z.number("Saldo do extrato bancário é obrigatório"),
+  observacao: z.string().optional(),
 });
 
 export const atualizarConciliacaoSchema = criarConciliacaoSchema.partial();

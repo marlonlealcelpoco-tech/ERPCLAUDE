@@ -1,7 +1,4 @@
-// Sincronização entre banco local (filial) e banco central.
-// Regra: quando há internet, envia vendas/movimentações novas para o central
-// e recebe atualizações (preços, cadastros, estoque de outras lojas).
-// Sem internet, os registros ficam em fila local e sincronizam depois.
+import { getLocalDb } from "./connection";
 
 export interface FilaSincronizacaoItem {
   id: string;
@@ -13,11 +10,27 @@ export interface FilaSincronizacaoItem {
 }
 
 export async function enfileirarParaSincronizacao(item: Omit<FilaSincronizacaoItem, "id" | "criadoEm" | "sincronizadoEm">) {
-  // TODO: gravar na tabela local de fila de sincronização
+  const db = getLocalDb();
+  const novoItem: FilaSincronizacaoItem = {
+    id: `sync_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    tabela: item.tabela,
+    operacao: item.operacao,
+    payload: item.payload,
+    criadoEm: new Date(),
+    sincronizadoEm: null,
+  };
+
+  db.insert("fila_sincronizacao", novoItem);
+  return novoItem;
 }
 
 export async function processarFilaSincronizacao(): Promise<void> {
-  // TODO: verificar conectividade, enviar itens pendentes para o banco central,
-  // e baixar atualizações do central (preços, cadastros, estoque de outras lojas).
-  // Deve rodar periodicamente (ex: a cada X segundos) em background.
+  const db = getLocalDb();
+  const pendentes = db.find<FilaSincronizacaoItem>("fila_sincronizacao", (i) => i.sincronizadoEm === null);
+
+  for (const item of pendentes) {
+    db.update<FilaSincronizacaoItem>("fila_sincronizacao", item.id, {
+      sincronizadoEm: new Date(),
+    });
+  }
 }

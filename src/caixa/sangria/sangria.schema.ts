@@ -1,8 +1,8 @@
-// Validação de entrada (zod) do módulo sangria
 import { z } from "zod";
 
 export const criarSangriaSchema = z.object({
-  // TODO: definir campos obrigatórios de sangria
+  valor: z.number().positive("Valor da sangria deve ser maior que zero"),
+  observacao: z.string().optional(),
 });
 
 export const atualizarSangriaSchema = criarSangriaSchema.partial();

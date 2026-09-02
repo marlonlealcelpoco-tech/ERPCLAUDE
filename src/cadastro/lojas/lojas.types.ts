@@ -1,16 +1,29 @@
-// Tipos do módulo lojas
-// TODO: substituir por tipos reais conforme desenho-erp.md
-
-export interface Lojas {
+export interface Loja {
   id: string;
+  nome: string;
+  cnpj?: string;
+  endereco?: string;
+  telefone?: string;
+  matriz: boolean;
+  ativa: boolean;
   criadoEm: Date;
   atualizadoEm: Date;
 }
 
-export interface CriarLojasInput {
-  // TODO: campos de criação
+export interface CriarLojaInput {
+  nome: string;
+  cnpj?: string;
+  endereco?: string;
+  telefone?: string;
+  matriz?: boolean;
+  ativa?: boolean;
 }
 
-export interface AtualizarLojasInput {
-  // TODO: campos de atualização
+export interface AtualizarLojaInput {
+  nome?: string;
+  cnpj?: string;
+  endereco?: string;
+  telefone?: string;
+  matriz?: boolean;
+  ativa?: boolean;
 }

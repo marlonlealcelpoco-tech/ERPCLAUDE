@@ -1,16 +1,22 @@
-// Tipos do módulo xml
-// TODO: substituir por tipos reais conforme desenho-erp.md
-
-export interface Xml {
-  id: string;
-  criadoEm: Date;
-  atualizadoEm: Date;
+export interface ItemXmlNfe {
+  codigoProduto: string;
+  nomeProduto: string;
+  ncm?: string;
+  quantidade: number;
+  valorUnitario: number;
+  valorTotal: number;
 }
 
-export interface CriarXmlInput {
-  // TODO: campos de criação
+export interface DadosXmlNfe {
+  numeroNota: string;
+  chaveNfe: string;
+  cnpjFornecedor: string;
+  nomeFornecedor: string;
+  dataEmissao: Date;
+  valorTotalNota: number;
+  itens: ItemXmlNfe[];
 }
 
-export interface AtualizarXmlInput {
-  // TODO: campos de atualização
+export interface ParseXmlInput {
+  conteudoXml: string;
 }

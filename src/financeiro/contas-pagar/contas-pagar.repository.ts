@@ -1,32 +1,74 @@
-// Acesso a dados do módulo contas-pagar
-// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
-// então este repositório sempre lê/escreve no banco local, e a sincronização com o
-// banco central acontece de forma assíncrona (ver shared/database/sync).
 import { getLocalDb } from "../../shared/database/connection";
-import type { ContasPagar, CriarContasPagarInput, AtualizarContasPagarInput } from "./contas-pagar.types";
+import type { ContaPagar, CriarContaPagarInput, BaixarContaPagarInput } from "./contas-pagar.types";
+import { enfileirarParaSincronizacao } from "../../shared/database/sync";
+
+const TABLE_NAME = "contas_pagar";
 
 export class ContasPagarRepository {
-  async listar(): Promise<ContasPagar[]> {
+  async listar(): Promise<ContaPagar[]> {
     const db = getLocalDb();
-    // TODO: query real
-    return [];
+    return db.find<ContaPagar>(TABLE_NAME);
   }
 
-  async buscarPorId(id: string): Promise<ContasPagar | null> {
+  async buscarPorId(id: string): Promise<ContaPagar | null> {
     const db = getLocalDb();
-    // TODO: query real
-    return null;
+    return db.findById<ContaPagar>(TABLE_NAME, id);
   }
 
-  async criar(dados: CriarContasPagarInput): Promise<ContasPagar> {
+  async buscarPorCompraId(compraId: string): Promise<ContaPagar[]> {
     const db = getLocalDb();
-    // TODO: insert real + marcar para sincronização
-    throw new Error("Não implementado");
+    return db.find<ContaPagar>(TABLE_NAME, (c) => c.compraId === compraId);
   }
 
-  async atualizar(id: string, dados: AtualizarContasPagarInput): Promise<ContasPagar> {
+  async criar(dados: CriarContaPagarInput): Promise<ContaPagar> {
     const db = getLocalDb();
-    // TODO: update real + marcar para sincronização
-    throw new Error("Não implementado");
+    const agora = new Date();
+    const novaConta: ContaPagar = {
+      id: `cpag_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      compraId: dados.compraId,
+      fornecedorId: dados.fornecedorId,
+      descricao: dados.descricao,
+      valorOriginal: dados.valorOriginal,
+      valorPago: 0,
+      status: "pendente",
+      dataVencimento: new Date(dados.dataVencimento),
+      lojaId: dados.lojaId,
+      criadoEm: agora,
+      atualizadoEm: agora,
+    };
+
+    db.insert<ContaPagar>(TABLE_NAME, novaConta);
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "insert",
+      payload: novaConta,
+    });
+
+    return novaConta;
+  }
+
+  async baixar(id: string, dados: BaixarContaPagarInput): Promise<ContaPagar> {
+    const db = getLocalDb();
+    const conta = db.findById<ContaPagar>(TABLE_NAME, id);
+    if (!conta) throw new Error("Conta a pagar não encontrada");
+
+    const novoValorPago = conta.valorPago + dados.valorPago;
+    const status = novoValorPago >= conta.valorOriginal ? "pago" : "pago_parcial";
+    const dataPagamento = dados.dataPagamento ? new Date(dados.dataPagamento) : new Date();
+
+    const atualizada = db.update<ContaPagar>(TABLE_NAME, id, {
+      valorPago: novoValorPago,
+      status,
+      dataPagamento,
+      atualizadoEm: new Date(),
+    });
+
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "update",
+      payload: atualizada,
+    });
+
+    return atualizada;
   }
 }

@@ -1,16 +1,18 @@
-// Tipos do módulo contas-a-prazo
-// TODO: substituir por tipos reais conforme desenho-erp.md
-
-export interface ContasAPrazo {
+export interface ContaAPrazo {
   id: string;
+  vendaId: string;
+  clienteId: string;
+  lojaId: string;
+  valorOriginal: number;
+  valorSaldo: number;
+  status: "pendente" | "pago_parcial" | "pago";
   criadoEm: Date;
   atualizadoEm: Date;
 }
 
-export interface CriarContasAPrazoInput {
-  // TODO: campos de criação
-}
-
-export interface AtualizarContasAPrazoInput {
-  // TODO: campos de atualização
+export interface CriarContaAPrazoInput {
+  vendaId: string;
+  clienteId: string;
+  lojaId: string;
+  valorOriginal: number;
 }

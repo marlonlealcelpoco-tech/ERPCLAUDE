@@ -1,32 +1,44 @@
-// Acesso a dados do módulo sangria
-// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
-// então este repositório sempre lê/escreve no banco local, e a sincronização com o
-// banco central acontece de forma assíncrona (ver shared/database/sync).
 import { getLocalDb } from "../../shared/database/connection";
-import type { Sangria, CriarSangriaInput, AtualizarSangriaInput } from "./sangria.types";
+import type { Sangria, CriarSangriaInput } from "./sangria.types";
+import { enfileirarParaSincronizacao } from "../../shared/database/sync";
+
+const TABLE_NAME = "sangrias";
 
 export class SangriaRepository {
   async listar(): Promise<Sangria[]> {
     const db = getLocalDb();
-    // TODO: query real
-    return [];
+    return db.find<Sangria>(TABLE_NAME);
+  }
+
+  async buscarPorCaixaId(caixaId: string): Promise<Sangria[]> {
+    const db = getLocalDb();
+    return db.find<Sangria>(TABLE_NAME, (s) => s.caixaId === caixaId);
   }
 
   async buscarPorId(id: string): Promise<Sangria | null> {
     const db = getLocalDb();
-    // TODO: query real
-    return null;
+    return db.findById<Sangria>(TABLE_NAME, id);
   }
 
   async criar(dados: CriarSangriaInput): Promise<Sangria> {
     const db = getLocalDb();
-    // TODO: insert real + marcar para sincronização
-    throw new Error("Não implementado");
-  }
+    const agora = new Date();
+    const novaSangria: Sangria = {
+      id: `sng_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      caixaId: dados.caixaId,
+      usuarioId: dados.usuarioId,
+      valor: dados.valor,
+      observacao: dados.observacao,
+      criadoEm: agora,
+    };
 
-  async atualizar(id: string, dados: AtualizarSangriaInput): Promise<Sangria> {
-    const db = getLocalDb();
-    // TODO: update real + marcar para sincronização
-    throw new Error("Não implementado");
+    db.insert<Sangria>(TABLE_NAME, novaSangria);
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "insert",
+      payload: novaSangria,
+    });
+
+    return novaSangria;
   }
 }

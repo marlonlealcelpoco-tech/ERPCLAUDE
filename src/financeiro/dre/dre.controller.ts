@@ -1,44 +1,15 @@
-// Controller HTTP do módulo dre
 import type { Request, Response, NextFunction } from "express";
 import { DreService } from "./dre.service";
-import { criarDreSchema, atualizarDreSchema } from "./dre.schema";
+import { filtroDreSchema } from "./dre.schema";
 
 const service = new DreService();
 
 export const dreController = {
-  async listar(req: Request, res: Response, next: NextFunction) {
+  async calcularDre(req: Request, res: Response, next: NextFunction) {
     try {
-      const itens = await service.listar();
-      res.json(itens);
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async buscarPorId(req: Request, res: Response, next: NextFunction) {
-    try {
-      const item = await service.buscarPorId(req.params.id);
-      res.json(item);
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async criar(req: Request, res: Response, next: NextFunction) {
-    try {
-      const dados = criarDreSchema.parse(req.body);
-      const item = await service.criar(dados);
-      res.status(201).json(item);
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async atualizar(req: Request, res: Response, next: NextFunction) {
-    try {
-      const dados = atualizarDreSchema.parse(req.body);
-      const item = await service.atualizar(req.params.id, dados);
-      res.json(item);
+      const filtro = filtroDreSchema.parse(req.query);
+      const dre = await service.calcularDre(filtro);
+      res.json(dre);
     } catch (err) {
       next(err);
     }

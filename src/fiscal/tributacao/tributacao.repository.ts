@@ -1,32 +1,66 @@
-// Acesso a dados do módulo tributacao
-// Usa o banco local da filial (ver shared/database) — cada filial tem seu próprio banco,
-// então este repositório sempre lê/escreve no banco local, e a sincronização com o
-// banco central acontece de forma assíncrona (ver shared/database/sync).
 import { getLocalDb } from "../../shared/database/connection";
-import type { Tributacao, CriarTributacaoInput, AtualizarTributacaoInput } from "./tributacao.types";
+import type { RegraTributaria, CriarTributacaoInput, AtualizarTributacaoInput } from "./tributacao.types";
+import { enfileirarParaSincronizacao } from "../../shared/database/sync";
+
+const TABLE_NAME = "regras_tributarias";
 
 export class TributacaoRepository {
-  async listar(): Promise<Tributacao[]> {
+  async listar(): Promise<RegraTributaria[]> {
     const db = getLocalDb();
-    // TODO: query real
-    return [];
+    return db.find<RegraTributaria>(TABLE_NAME);
   }
 
-  async buscarPorId(id: string): Promise<Tributacao | null> {
+  async buscarPorId(id: string): Promise<RegraTributaria | null> {
     const db = getLocalDb();
-    // TODO: query real
-    return null;
+    return db.findById<RegraTributaria>(TABLE_NAME, id);
   }
 
-  async criar(dados: CriarTributacaoInput): Promise<Tributacao> {
+  async buscarPorNcm(ncm: string): Promise<RegraTributaria | null> {
     const db = getLocalDb();
-    // TODO: insert real + marcar para sincronização
-    throw new Error("Não implementado");
+    const [item] = db.find<RegraTributaria>(TABLE_NAME, (r) => r.ncm === ncm && r.ativa);
+    return item || null;
   }
 
-  async atualizar(id: string, dados: AtualizarTributacaoInput): Promise<Tributacao> {
+  async criar(dados: CriarTributacaoInput): Promise<RegraTributaria> {
     const db = getLocalDb();
-    // TODO: update real + marcar para sincronização
-    throw new Error("Não implementado");
+    const agora = new Date();
+    const novaRegra: RegraTributaria = {
+      id: `trib_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      descricao: dados.descricao,
+      ncm: dados.ncm,
+      cstIcms: dados.cstIcms,
+      cfop: dados.cfop,
+      aliquotaIcms: dados.aliquotaIcms,
+      aliquotaPis: dados.aliquotaPis ?? 0,
+      aliquotaCofins: dados.aliquotaCofins ?? 0,
+      ativa: dados.ativa ?? true,
+      criadoEm: agora,
+      atualizadoEm: agora,
+    };
+
+    db.insert<RegraTributaria>(TABLE_NAME, novaRegra);
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "insert",
+      payload: novaRegra,
+    });
+
+    return novaRegra;
+  }
+
+  async atualizar(id: string, dados: AtualizarTributacaoInput): Promise<RegraTributaria> {
+    const db = getLocalDb();
+    const atualizada = db.update<RegraTributaria>(TABLE_NAME, id, {
+      ...dados,
+      atualizadoEm: new Date(),
+    });
+
+    await enfileirarParaSincronizacao({
+      tabela: TABLE_NAME,
+      operacao: "update",
+      payload: atualizada,
+    });
+
+    return atualizada;
   }
 }

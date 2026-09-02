@@ -1,16 +1,31 @@
-// Tipos do módulo clientes
-// TODO: substituir por tipos reais conforme desenho-erp.md
-
-export interface Clientes {
+export interface Cliente {
   id: string;
+  nome: string;
+  cpfCnpj?: string;
+  telefone?: string;
+  email?: string;
+  endereco?: string;
+  limiteCredito: number;
+  saldoDevedor: number;
   criadoEm: Date;
   atualizadoEm: Date;
 }
 
-export interface CriarClientesInput {
-  // TODO: campos de criação
+export interface CriarClienteInput {
+  nome: string;
+  cpfCnpj?: string;
+  telefone?: string;
+  email?: string;
+  endereco?: string;
+  limiteCredito?: number;
 }
 
-export interface AtualizarClientesInput {
-  // TODO: campos de atualização
+export interface AtualizarClienteInput {
+  nome?: string;
+  cpfCnpj?: string;
+  telefone?: string;
+  email?: string;
+  endereco?: string;
+  limiteCredito?: number;
+  saldoDevedor?: number;
 }

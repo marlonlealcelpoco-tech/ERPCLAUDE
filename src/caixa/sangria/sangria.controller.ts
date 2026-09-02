@@ -1,7 +1,6 @@
-// Controller HTTP do módulo sangria
 import type { Request, Response, NextFunction } from "express";
 import { SangriaService } from "./sangria.service";
-import { criarSangriaSchema, atualizarSangriaSchema } from "./sangria.schema";
+import { criarSangriaSchema } from "./sangria.schema";
 
 const service = new SangriaService();
 
@@ -24,21 +23,12 @@ export const sangriaController = {
     }
   },
 
-  async criar(req: Request, res: Response, next: NextFunction) {
+  async registrarSangria(req: Request, res: Response, next: NextFunction) {
     try {
       const dados = criarSangriaSchema.parse(req.body);
-      const item = await service.criar(dados);
+      const usuarioId = req.usuario!.id;
+      const item = await service.registrarSangria(usuarioId, dados);
       res.status(201).json(item);
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async atualizar(req: Request, res: Response, next: NextFunction) {
-    try {
-      const dados = atualizarSangriaSchema.parse(req.body);
-      const item = await service.atualizar(req.params.id, dados);
-      res.json(item);
     } catch (err) {
       next(err);
     }
