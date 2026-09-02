@@ -13,8 +13,9 @@ export function popularDadosIniciais(): void {
       id: "loja_1",
       nome: "Filial A - Matriz Centro",
       cnpj: "12345678000199",
-      tipo: "matriz",
       endereco: "Rua Principal, 100 - Centro",
+      matriz: true,
+      ativa: true,
       criadoEm: new Date(),
       atualizadoEm: new Date(),
     };

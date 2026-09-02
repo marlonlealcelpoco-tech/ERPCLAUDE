@@ -70,12 +70,13 @@ app.use("/cadastro/fornecedores", fornecedoresRouter);
 app.use("/cadastro/produtos", produtosRouter);
 app.use("/cadastro/lojas", lojasRouter);
 
+app.use("/compras/manual", comprasRouter);
 app.use("/compras", comprasRouter);
 app.use("/compras/notas", notasRouter);
 app.use("/compras/xml", xmlRouter);
 
 app.use("/vendas/pdv", pdvRouter);
-app.use("/vendas", vendasRouter);
+app.use("/vendas", pdvRouter);
 app.use("/vendas/devolucoes", devolucoesRouter);
 app.use("/vendas/contas-a-prazo", contasAPrazoRouter);
 
@@ -90,6 +91,7 @@ app.use("/estoque/saidas", saidasRouter);
 app.use("/estoque/ajustes", ajustesRouter);
 app.use("/estoque/avarias", avariasRouter);
 app.use("/estoque/inventario", inventarioRouter);
+app.use("/estoque/conferencia", inventarioRouter);
 
 app.use("/financeiro/contas-pagar", contasPagarRouter);
 app.use("/financeiro/contas-receber", contasReceberRouter);

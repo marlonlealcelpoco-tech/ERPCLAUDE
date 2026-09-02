@@ -5,6 +5,8 @@ export interface Produto {
   precoCusto: number;
   precoVenda: number;
   estoqueAtual: number;
+  estoqueMinimo?: number;
+  unidade?: string;
   categoria?: string;
   fornecedorId?: string;
   ativo: boolean;
